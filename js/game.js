@@ -32,7 +32,16 @@ function save() {
 
 /* ---------------- المحرك ---------------- */
 const canvas = $('view');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+function makeRenderer() {
+  try { return new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+  catch (e) {
+    // المتصفح رفض الرسوم ثلاثية الأبعاد: نخبر التلميذ بدل أن تبقى شاشة التحميل بلا نهاية
+    $('loading').querySelector('.spinner').style.display = 'none';
+    $('loading').querySelector('p').textContent = 'تعذّر تشغيل الرسوم ثلاثية الأبعاد في هذا المتصفح. أغلقي المتصفح تمامًا وافتحيه من جديد، أو جرّبي متصفحًا آخر.';
+    throw e;
+  }
+}
+const renderer = makeRenderer();
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
