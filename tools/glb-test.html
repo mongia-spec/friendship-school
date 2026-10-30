@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>اختبار شخصية Meshy</title>
+<style>html,body{margin:0;height:100%;background:#9fdcff;overflow:hidden}canvas{display:block}#b{position:fixed;top:8px;right:8px;display:flex;gap:6px;font:16px Tahoma}button{padding:6px 12px}</style></head>
+<body><div id="b"></div><canvas id="c"></canvas>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/three-addons.js"></script>
+<script>
+// صفحة اختبار فقط: تعرض شخصية من Meshy وتشغّل حركاتها
+const r = new THREE.WebGLRenderer({ canvas: c, antialias: true });
+r.setSize(innerWidth, innerHeight); r.outputEncoding = THREE.sRGBEncoding;
+const s = new THREE.Scene(); s.background = new THREE.Color(0x9fdcff);
+s.add(new THREE.HemisphereLight(0xffffff, 0x8a7a5a, 1.1));
+const d = new THREE.DirectionalLight(0xffffff, 0.9); d.position.set(-2, 5, 4); s.add(d);
+const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.05, 100);
+const g = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshLambertMaterial({ color: 0x8fd16a })); g.rotation.x = -Math.PI / 2; s.add(g);
+let mixer, model;
+const file = new URLSearchParams(location.search).get('f') || 'salem';
+new THREE.GLTFLoader().load('../assets/chars/' + file + '.glb', (gl) => {
+  model = gl.scene; s.add(model);
+  const box = new THREE.Box3().setFromObject(model), h = box.max.y - box.min.y;
+  cam.position.set(0, h * 0.6, h * 2.6); cam.lookAt(0, h * 0.5, 0);
+  mixer = new THREE.AnimationMixer(model);
+  gl.animations.forEach((a) => { const bt = document.createElement('button'); bt.textContent = a.name; bt.onclick = () => { mixer.stopAllAction(); mixer.clipAction(a).play(); }; b.appendChild(bt); });
+  if (gl.animations[0]) mixer.clipAction(gl.animations[1] || gl.animations[0]).play();
+  window.__info = { h, anims: gl.animations.map((a) => a.name) };
+}, undefined, (e) => { window.__err = String(e); });
+let last = performance.now();
+(function f(t) { requestAnimationFrame(f); const dt = Math.min(0.05, (t - last) / 1000); last = t; mixer && mixer.update(dt); r.render(s, cam); })(last);
+</script></body></html>

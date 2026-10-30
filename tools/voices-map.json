@@ -1,0 +1,530 @@
+{
+ "intro-0": [
+  "narrator",
+  "1793199823587"
+ ],
+ "intro-1": [
+  "shtshout",
+  "1793197828806"
+ ],
+ "intro-2": [
+  "shtshouta",
+  "1793197833879"
+ ],
+ "intro-3": [
+  "shtshout",
+  "1793197840381"
+ ],
+ "intro-4": [
+  "shtshouta",
+  "1793197844443"
+ ],
+ "intro-5": [
+  "narrator",
+  "1793199857374"
+ ],
+ "intro-6": [
+  "narrator",
+  "1793199862941"
+ ],
+ "intro-7": [
+  "shtshout",
+  "1793197863000"
+ ],
+ "intro-8": [
+  "shtshouta",
+  "1793197869775"
+ ],
+ "yardTalk-0": [
+  "shtshouta",
+  "1793197913258"
+ ],
+ "yardTalk-1": [
+  "shtshout",
+  "1793197918434"
+ ],
+ "yardTalk-2": [
+  "shtshouta",
+  "1793197923278"
+ ],
+ "yardTalk-3": [
+  "shtshouta",
+  "1793197928838"
+ ],
+ "libraryEnter-0": [
+  "monster",
+  "1793197934378"
+ ],
+ "libraryEnter-1": [
+  "monster",
+  "1793197939446"
+ ],
+ "libraryEnter-2": [
+  "shtshout",
+  "1793197944036"
+ ],
+ "libraryEnter-3": [
+  "shtshouta",
+  "1793197949854"
+ ],
+ "story-done-0": [
+  "monster",
+  "1793197995666"
+ ],
+ "story-done-1": [
+  "shtshouta",
+  "1793198001411"
+ ],
+ "wordBridge-intro-0": [
+  "shtshouta",
+  "1793198008233"
+ ],
+ "wordBridge-intro-1": [
+  "shtshout",
+  "1793198016084"
+ ],
+ "wordBridge-done-0": [
+  "monster",
+  "1793198021238"
+ ],
+ "spell-intro-0": [
+  "shtshouta",
+  "1793198026746"
+ ],
+ "spell-intro-1": [
+  "shtshouta",
+  "1793198031916"
+ ],
+ "spell-done-0": [
+  "monster",
+  "1793198042784"
+ ],
+ "spell-done-1": [
+  "narrator",
+  "1793199867580"
+ ],
+ "rescue-0": [
+  "friend",
+  "1793198091125"
+ ],
+ "rescue-1": [
+  "friend",
+  "1793198099055"
+ ],
+ "rescue-2": [
+  "shtshout",
+  "1793198103390"
+ ],
+ "ending-0": [
+  "narrator",
+  "1793199872717"
+ ],
+ "ending-1": [
+  "shtshouta",
+  "1793198113975"
+ ],
+ "ending-2": [
+  "shtshout",
+  "1793198120106"
+ ],
+ "ending-3": [
+  "shtshouta",
+  "1793198123112"
+ ],
+ "ending-4": [
+  "narrator",
+  "1793199878041"
+ ],
+ "ending-5": [
+  "mongia",
+  "1793198134824"
+ ],
+ "listen-listening-0": [
+  "narrator",
+  "1793228832589"
+ ],
+ "listen-listening-1": [
+  "narrator",
+  "1793228849605"
+ ],
+ "listen-listening-2": [
+  "narrator",
+  "1793228853294"
+ ],
+ "listen-listening-3": [
+  "narrator",
+  "1793228858690"
+ ],
+ "listen-tests-3": [
+  "narrator",
+  "1793228862812"
+ ],
+ "rooms-spelling-intro-0": [
+  "monster",
+  "1793228919982"
+ ],
+ "rooms-spelling-intro-1": [
+  "shtshouta",
+  "1793228924700"
+ ],
+ "rooms-spelling-win-0": [
+  "monster",
+  "1793228929403"
+ ],
+ "rooms-spelling-win-1": [
+  "friend",
+  "1793228934060"
+ ],
+ "rooms-grammar-intro-0": [
+  "monster",
+  "1793228938366"
+ ],
+ "rooms-grammar-intro-1": [
+  "shtshout",
+  "1793228941994"
+ ],
+ "rooms-grammar-intro-2": [
+  "shtshouta",
+  "1793228971817"
+ ],
+ "rooms-grammar-win-0": [
+  "monster",
+  "1793228976104"
+ ],
+ "rooms-grammar-win-1": [
+  "friend",
+  "1793228979959"
+ ],
+ "rooms-listening-intro-0": [
+  "monster",
+  "1793228984026"
+ ],
+ "rooms-listening-intro-1": [
+  "shtshouta",
+  "1793228988353"
+ ],
+ "rooms-listening-win-0": [
+  "monster",
+  "1793228992485"
+ ],
+ "rooms-listening-win-1": [
+  "girl",
+  "1793228996419"
+ ],
+ "rooms-vocab-intro-0": [
+  "monster",
+  "1793229002729"
+ ],
+ "rooms-vocab-intro-1": [
+  "shtshouta",
+  "1793229030058"
+ ],
+ "rooms-vocab-win-0": [
+  "monster",
+  "1793229034810"
+ ],
+ "rooms-vocab-win-1": [
+  "girl",
+  "1793229038885"
+ ],
+ "rooms-expression-intro-0": [
+  "narrator",
+  "1793229043458"
+ ],
+ "rooms-expression-intro-1": [
+  "shtshout",
+  "1793229046687"
+ ],
+ "rooms-expression-intro-2": [
+  "shtshouta",
+  "1793229051665"
+ ],
+ "rooms-expression-win-0": [
+  "monster",
+  "1793229056115"
+ ],
+ "rooms-expression-win-1": [
+  "girl",
+  "1793229060555"
+ ],
+ "rooms-homework-intro-0": [
+  "monster",
+  "1793229088271"
+ ],
+ "rooms-homework-intro-1": [
+  "shtshout",
+  "1793229091330"
+ ],
+ "rooms-homework-intro-2": [
+  "shtshouta",
+  "1793229096154"
+ ],
+ "rooms-homework-win-0": [
+  "monster",
+  "1793229100753"
+ ],
+ "rooms-memory-intro-0": [
+  "monster",
+  "1793229105030"
+ ],
+ "rooms-memory-intro-1": [
+  "shtshouta",
+  "1793229109988"
+ ],
+ "rooms-memory-win-0": [
+  "monster",
+  "1793229114475"
+ ],
+ "rooms-review-intro-0": [
+  "monster",
+  "1793229118531"
+ ],
+ "rooms-review-intro-1": [
+  "shtshouta",
+  "1793229146812"
+ ],
+ "rooms-review-win-0": [
+  "monster",
+  "1793229149706"
+ ],
+ "rooms-tests-intro-0": [
+  "monster",
+  "1793229153592"
+ ],
+ "rooms-tests-intro-1": [
+  "mongia",
+  "1793229159556"
+ ],
+ "rooms-tests-intro-2": [
+  "shtshout",
+  "1793229164615"
+ ],
+ "rooms-tests-win-0": [
+  "monster",
+  "1793229169411"
+ ],
+ "rooms-tests-win-1": [
+  "mongia",
+  "1793229173339"
+ ],
+ "rooms-tests-win-2": [
+  "shtshout",
+  "1793229177653"
+ ],
+ "roomsx-class-0": [
+  "shtshouta",
+  "1793229207255"
+ ],
+ "roomsx-class-1": [
+  "shtshout",
+  "1793229211303"
+ ],
+ "roomsx-mongiaBefore-0": [
+  "mongia",
+  "1793229215946"
+ ],
+ "roomsx-mongiaBefore-1": [
+  "mongia",
+  "1793229222079"
+ ],
+ "roomsx-mongiaAfter-0": [
+  "mongia",
+  "1793229226969"
+ ],
+ "roomsx-secret-0": [
+  "narrator",
+  "1793229231653"
+ ],
+ "roomsx-secret-1": [
+  "shtshouta",
+  "1793229236048"
+ ],
+ "roomsx-secret-2": [
+  "shtshout",
+  "1793229240827"
+ ],
+ "roomsx-secret-3": [
+  "mongia",
+  "1793229245193"
+ ],
+ "g1-listen-listening-0": [
+  "narrator",
+  "1793267943203"
+ ],
+ "g1-listen-listening-1": [
+  "narrator",
+  "1793267950092"
+ ],
+ "g1-listen-listening-2": [
+  "narrator",
+  "1793267956161"
+ ],
+ "g1-listen-listening-3": [
+  "narrator",
+  "1793267963172"
+ ],
+ "g1-listen-tests-3": [
+  "narrator",
+  "1793267970943"
+ ],
+ "g2-listen-listening-0": [
+  "narrator",
+  "1793267999117"
+ ],
+ "g2-listen-listening-1": [
+  "narrator",
+  "1793268031227"
+ ],
+ "g2-listen-listening-2": [
+  "narrator",
+  "1793268040515"
+ ],
+ "g2-listen-listening-3": [
+  "narrator",
+  "1793268058674"
+ ],
+ "g2-listen-tests-3": [
+  "narrator",
+  "1793268063758"
+ ],
+ "g3-listen-listening-0": [
+  "narrator",
+  "1793268082955"
+ ],
+ "g3-listen-listening-1": [
+  "narrator",
+  "1793268095805"
+ ],
+ "g3-listen-listening-2": [
+  "narrator",
+  "1793268102450"
+ ],
+ "g3-listen-listening-3": [
+  "narrator",
+  "1793268114214"
+ ],
+ "g3-listen-tests-3": [
+  "narrator",
+  "1793268130372"
+ ],
+ "g4-listen-listening-0": [
+  "narrator",
+  "1793268175022"
+ ],
+ "g4-listen-listening-1": [
+  "narrator",
+  "1793268186805"
+ ],
+ "g4-listen-listening-2": [
+  "narrator",
+  "1793268216745"
+ ],
+ "g4-listen-listening-3": [
+  "narrator",
+  "1793268223604"
+ ],
+ "g4-listen-tests-3": [
+  "narrator",
+  "1793268242424"
+ ],
+ "g5-listen-listening-0": [
+  "narrator",
+  "1793268261535"
+ ],
+ "g5-listen-listening-1": [
+  "narrator",
+  "1793268276742"
+ ],
+ "g5-listen-listening-2": [
+  "narrator",
+  "1793268293171"
+ ],
+ "g5-listen-listening-3": [
+  "narrator",
+  "1793268392092"
+ ],
+ "g5-listen-tests-3": [
+  "narrator",
+  "1793268414860"
+ ],
+ "g6-listen-listening-0": [
+  "narrator",
+  "1793268463687"
+ ],
+ "g6-listen-listening-1": [
+  "narrator",
+  "1793268476921"
+ ],
+ "g6-listen-listening-2": [
+  "narrator",
+  "1793268502990"
+ ],
+ "g6-listen-listening-3": [
+  "narrator",
+  "1793268510912"
+ ],
+ "g6-listen-tests-3": [
+  "narrator",
+  "1793268640133"
+ ],
+ "g7-listen-listening-0": [
+  "narrator",
+  "1793268654284"
+ ],
+ "g7-listen-listening-1": [
+  "narrator",
+  "1793268688534"
+ ],
+ "g7-listen-listening-2": [
+  "narrator",
+  "1793268712125"
+ ],
+ "g7-listen-listening-3": [
+  "narrator",
+  "1793268719677"
+ ],
+ "g7-listen-tests-3": [
+  "narrator",
+  "1793268733342"
+ ],
+ "g8-listen-listening-0": [
+  "narrator",
+  "1793268801921"
+ ],
+ "g8-listen-listening-1": [
+  "narrator",
+  "1793268813396"
+ ],
+ "g8-listen-listening-2": [
+  "narrator",
+  "1793268826222"
+ ],
+ "g8-listen-listening-3": [
+  "narrator",
+  "1793268849870"
+ ],
+ "g8-listen-tests-3": [
+  "narrator",
+  "1793268857023"
+ ],
+ "g9-listen-listening-0": [
+  "narrator",
+  "1793268886419"
+ ],
+ "g9-listen-listening-1": [
+  "narrator",
+  "1793268909643"
+ ],
+ "g9-listen-listening-2": [
+  "narrator",
+  "1793268932544"
+ ],
+ "g9-listen-listening-3": [
+  "narrator",
+  "1793268946175"
+ ],
+ "g9-listen-tests-3": [
+  "narrator",
+  "1793268969330"
+ ]
+}

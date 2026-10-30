@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>معاينة الشخصيات</title>
+<style>html,body{margin:0;height:100%;background:#9fdcff;overflow:hidden}canvas{display:block}#b{position:fixed;top:8px;right:8px;display:flex;gap:6px;font:16px Tahoma}button{padding:6px 10px}</style></head>
+<body><div id="b"></div><canvas id="c"></canvas>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/three-addons.js"></script>
+<script src="../assets/models.js"></script>
+<script src="../js/characters.js"></script>
+<script>
+// صفحة اختبار فقط: تعرض الشخصيات جنبًا إلى جنب وتجرّب الحركات
+const r = new THREE.WebGLRenderer({ canvas: c, antialias: true });
+r.setSize(innerWidth, innerHeight); r.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+const s = new THREE.Scene(); s.background = new THREE.Color(0x9fdcff);
+s.add(new THREE.HemisphereLight(0xffffff, 0x8a7a5a, 0.9));
+const d = new THREE.DirectionalLight(0xfff2d6, 0.8); d.position.set(-3, 6, 5); s.add(d);
+const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+cam.position.set(0, 1.3, 6.2); cam.lookAt(0, 0.9, 0);
+const g = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshLambertMaterial({ color: 0x8fd16a })); g.rotation.x = -Math.PI / 2; s.add(g);
+const list = [];
+Chars.ready.then(() => {
+  ['mongia', 'shtshouta', 'shtshout', 'player', 'friend'].forEach((k, i) => {
+    const ch = Chars.make(k, k === 'friend' ? { color: 0x8e5cf7 } : {});
+    ch.group.position.x = 3 - i * 1.5; s.add(ch.group); list.push(ch);
+  });
+  for (const n of ['Idle_Loop', 'Walk_Loop', 'Jog_Fwd_Loop', 'Sprint_Loop', 'Jump_Loop', 'Dance_Loop', 'Interact']) {
+    const bt = document.createElement('button'); bt.textContent = n; bt.onclick = () => list.forEach((ch) => ch.play(n)); b.appendChild(bt);
+  }
+  window.__ok = true;
+}).catch((e) => { window.__err = String(e); console.error(e); });
+let last = performance.now(), turn = 0;
+(function f(t) { requestAnimationFrame(f); const dt = Math.min(0.05, (t - last) / 1000); last = t; list.forEach((ch) => ch.update(dt)); s.rotation.y = turn; r.render(s, cam); })(last);
+window.view = (a) => { turn = a; };
+window.render1 = (dt) => { list.forEach((ch) => ch.update(dt)); r.render(s, cam); };
+</script></body></html>

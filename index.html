@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>مدرسة الصداقة – سرّ الوحوش الستة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="view"></canvas>
+
+  <!-- واجهة اللعب -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <button class="pill" id="hudStars" title="مهاراتي">🎓 <b>0</b></button>
+      <div class="pill" id="hudPower" title="مستوى البطل: يرتفع كلما قويت مهاراتك">⚡ <b>0</b></div>
+      <div class="pill" id="hudPages" hidden>📄 <b>0</b>/5</div>
+      <div class="pill team" id="hudTeam"></div>
+      <button class="icon-btn" id="btnMute" title="الصوت">🔊</button>
+      <button class="icon-btn" id="btnPause" title="إيقاف مؤقت">⏸</button>
+    </div>
+    <div id="monsterBar" hidden>
+      <span id="monsterName">قِرطاس</span>
+      <div class="bar"><i id="monsterFill"></i></div>
+    </div>
+    <div id="tip"></div>
+    <div id="toast"></div>
+    <div id="prompt" hidden>اضغط <kbd>E</kbd> للتفاعل</div>
+    <div id="riddle" hidden></div>
+  </div>
+
+  <!-- أزرار اللمس -->
+  <div id="touch" hidden>
+    <div id="stick"><div id="knob"></div></div>
+    <div class="tbtns">
+      <button id="tJump">قفز</button>
+      <button id="tUse">تفاعل</button>
+      <button id="tRun">جري</button>
+    </div>
+  </div>
+
+  <!-- الحوار -->
+  <div id="dialog" hidden>
+    <div class="portrait" id="dlgPortrait"></div>
+    <div class="dlg-body">
+      <div class="dlg-name" id="dlgName"></div>
+      <div class="dlg-wave" id="dlgWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dlg-text" id="dlgText"></div>
+      <div class="dlg-bar">
+        <button class="dlg-replay" id="dlgReplay" title="أعد الصوت">🔁</button>
+        <span class="dlg-next">اضغط للمتابعة ◀</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ترتيب الصفحات -->
+  <div id="order" class="panel-wrap" hidden>
+    <div class="panel">
+      <h2 id="orderTitle"></h2>
+      <p class="hint" id="orderHint"></p>
+      <div class="order-cols">
+        <div>
+          <h3 id="orderPoolH">الصفحات المبعثرة</h3>
+          <div id="orderPool" class="pool"></div>
+        </div>
+        <div>
+          <h3 id="orderSlotsH">القصة بالترتيب</h3>
+          <ol id="orderSlots" class="slots"></ol>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="orderCheck">تحقّق من الترتيب</button>
+        <button class="btn ghost" id="orderReset">ابدأ من جديد</button>
+      </div>
+      <p class="feedback" id="orderFb"></p>
+    </div>
+  </div>
+
+  <!-- سؤال واختيارات (غرف الوحوش) -->
+  <div id="quiz" class="panel-wrap" hidden>
+    <div class="panel small">
+      <h2 id="quizTitle"></h2>
+      <button class="btn ghost" id="quizListen" hidden>🔊 أعد الاستماع</button>
+      <p class="quiz-q" id="quizQ"></p>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <p class="feedback" id="quizFb"></p>
+    </div>
+  </div>
+
+  <!-- شاشة العنوان -->
+  <div id="title" class="screen">
+    <div class="title-card">
+      <div class="badge">مغامرة تعليمية</div>
+      <h1>مدرسة الصداقة</h1>
+      <h2>سرّ الوحوش الستة</h2>
+      <div class="cast" id="titleCast"></div>
+      <div class="menu">
+        <button class="btn big" id="btnNew">ابدأ المغامرة</button>
+        <button class="btn" id="btnContinue" hidden>متابعة من آخر نقطة</button>
+        <button class="btn ghost" id="btnHelp">طريقة اللعب</button>
+      </div>
+      <p class="credit">فكرة وتصميم تربوي: الأستاذة منجية عادل</p>
+    </div>
+  </div>
+
+  <!-- اختيار البطل -->
+  <div id="heroPick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>اختر بطلك</h2>
+      <p class="hint">بمن تريد أن تلعب؟</p>
+      <div class="hero-row">
+        <button class="hero-card" data-hero="girl"><span>👧</span>بنت</button>
+        <button class="hero-card" data-hero="boy"><span>👦</span>ولد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- اختيار الصف الدراسي -->
+  <div id="gradePick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>في أيّ صف أنت؟</h2>
+      <p class="hint">نختار لك الأسئلة والنصوص على قدر مستواك.</p>
+      <div class="grade-row" id="gradeRow"></div>
+    </div>
+  </div>
+
+  <!-- اسم التلميذ -->
+  <div id="namePick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>ما اسمك يا بطل؟</h2>
+      <p class="hint">سيظهر اسمك فوق رأس بطلك طوال المغامرة.</p>
+      <input id="nameInput" class="name-input" maxlength="14" placeholder="اكتب اسمك هنا" dir="rtl" autocomplete="off">
+      <div class="menu"><button class="btn big" id="nameGo">ابدأ المغامرة</button></div>
+    </div>
+  </div>
+
+  <!-- مهاراتي -->
+  <div id="skills" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>🎓 مهاراتي</h2>
+      <p class="hint">كل إجابة صحيحة وكل شارة تجمعها تقوّي مهارة. كلما اجتهدت صار بطلك أقوى.</p>
+      <p class="skills-level" id="skillsLevel"></p>
+      <div id="skillsList"></div>
+      <button class="btn" id="skillsClose">متابعة اللعب</button>
+    </div>
+  </div>
+
+  <!-- المساعدة -->
+  <div id="help" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>طريقة اللعب</h2>
+      <ul class="keys">
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> أو الأسهم: المشي</li>
+        <li><kbd>Shift</kbd>: الجري</li>
+        <li><kbd>مسافة</kbd>: القفز</li>
+        <li><kbd>E</kbd> أو <kbd>Enter</kbd>: التفاعل والحوار</li>
+        <li>اسحب بالفأرة أو بالإصبع لتدوير الكاميرا، أو <kbd>Q</kbd> و<kbd>R</kbd></li>
+        <li>على الهاتف: عصا التحكم يسارًا والأزرار يمينًا</li>
+      </ul>
+      <button class="btn" id="btnHelpClose">فهمت</button>
+    </div>
+  </div>
+
+  <!-- الإيقاف المؤقت -->
+  <div id="pause" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>استراحة قصيرة</h2>
+      <div class="menu">
+        <button class="btn" id="btnResume">متابعة اللعب</button>
+        <button class="btn ghost" id="btnGrade">📚 تغيير الصف</button>
+        <button class="btn ghost" id="btnPauseHelp">طريقة اللعب</button>
+        <button class="btn ghost" id="btnRestart">إعادة المستوى من البداية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- النهاية -->
+  <div id="end" class="screen dim" hidden>
+    <div class="panel">
+      <h2 id="endTitle"></h2>
+      <div class="cast" id="endCast"></div>
+      <p class="big-line" id="endLine"></p>
+      <p id="endStats"></p>
+      <p class="hint" id="endNext"></p>
+      <div class="row">
+        <button class="btn" id="btnEndGo">تابع المغامرة</button>
+        <button class="btn ghost" id="btnReplay">ابدأ اللعبة من جديد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ملكية اللعبة: تظهر في كل الشاشات -->
+  <div id="owner">© 2026 لعبة «مدرسة الصداقة» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة</div>
+  <div id="fade"></div>
+  <div id="loading" class="screen"><div class="spinner"></div><p>جارٍ تجهيز المدرسة...</p></div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/three-addons.js"></script>
+<script src="assets/sprites.js"></script>
+<script src="content/level1.js"></script>
+<script src="content/rooms.js"></script>
+<script src="content/grades-1-3.js"></script>
+<script src="content/grades-4-6.js"></script>
+<script src="content/grades-7-9.js"></script>
+<script src="voices/voices.js"></script>
+<script src="js/audio.js"></script>
+<script src="assets/rooms/library.js"></script>
+<script src="js/library-look.js"></script>
+<script src="assets/rooms/hall.js"></script>
+<script src="js/hall-look.js"></script>
+<script src="js/yard-look.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

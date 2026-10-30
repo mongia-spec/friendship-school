@@ -1,0 +1,10 @@
+# ملفات العمل الخاصة: لا تُنشر
+_downloads/
+refs/
+assets/old/
+assets/chars/raw/
+assets/models.js
+tools/node_modules/
+artifact.html
+برومبتات-صور-الغرف.md
+دليل-الغرف-والوحوش.md
