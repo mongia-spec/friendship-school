@@ -111,7 +111,7 @@
         <div class="hw-row">
           <button class="btn ghost" id="btnHelp">طريقة اللعب</button>
           <button class="btn ghost" id="btnHomework">📥 واجباتي</button>
-          <button class="btn ghost" id="btnTeacher">📤 رفع واجب (للمعلم)</button>
+          <button class="btn ghost" id="btnTeacher">📤 للمعلم وولي الأمر</button>
         </div>
       </div>
       <p class="credit">فكرة وتصميم تربوي: الأستاذة منجية عادل</p>
@@ -213,6 +213,7 @@
       <h2>📥 واجباتي</h2>
       <p class="feedback" id="hwListMsg"></p>
       <div id="hwRows"></div>
+      <div class="hw-draft-row" id="hwWordsRow" hidden><span id="hwWordsInfo"></span><button id="hwWordsClear" title="إعادة أسئلة اللعبة">✕</button></div>
       <input id="hwPaste" class="hw-input" dir="ltr" placeholder="الصق هنا رابط الواجب من معلمك" autocomplete="off">
       <div class="row">
         <button class="btn" id="hwPasteGo">أضف الواجب</button>
@@ -255,8 +256,8 @@
   <!-- رفع الواجب (المعلم) -->
   <div id="hwTeacher" class="screen dim" hidden>
     <div class="panel small">
-      <h2>📤 رفع واجب</h2>
-      <p class="hint">اكتب الواجب واختر غرفته، فتحصل على رابط ترسله إلى طلابك. يظهر الواجب لكل طالب يفتح الرابط.</p>
+      <h2>📤 للمعلم وولي الأمر</h2>
+      <p class="hint">اكتب واجبًا، أو غيّر كلمات غرفة الإملاء، فتحصل على رابط ترسله إلى طلابك. يظهر ما كتبته لكل طالب يفتح الرابط.</p>
       <input id="hwfTeacher" class="hw-input" maxlength="60" placeholder="اسم المعلم" autocomplete="off">
       <input id="hwfEmail" class="hw-input" dir="ltr" maxlength="120" placeholder="بريدك لتسلّم الحلول (اختياري)" autocomplete="off">
       <p class="hint hw-small">بريدك يكون داخل الرابط، فيراه كل من يصله الرابط.</p>
@@ -273,9 +274,13 @@
       <label class="hw-check"><input type="checkbox" id="hwfPaper"> أسمح بالتسليم الورقي بدل الحل داخل اللعبة</label>
       <p class="hint hw-small">اللعبة تضمن أن يملأ الطالب كل الخانات في وقته، أما تصحيح الإجابات فعندك.</p>
       <div id="hwDraft"></div>
+      <h3 class="hw-label">✏️ كلمات غرفة الإملاء (اختياري)</h3>
+      <p class="hint hw-small">مثال: درستَ الهمزة المتوسطة هذا الأسبوع. تحلّ كلماتك محل أسئلة الغرفة، ويرتّب الطالب حروفها ويختار كتابتها الصحيحة بينما يطارده الوحش.</p>
+      <input id="hwfTopic" class="hw-input" maxlength="60" placeholder="المهارة، مثل: الهمزة المتوسطة">
+      <textarea id="hwfWords" class="hw-input" rows="3" dir="rtl" placeholder="اكتب الكلمات: سأل، مسؤول، رئيس&#10;أو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول"></textarea>
       <div class="hw-row">
         <button class="btn ghost" id="hwfAdd">➕ واجب آخر</button>
-        <button class="btn" id="hwfMake">🔗 أنشئ رابط الواجب</button>
+        <button class="btn" id="hwfMake">🔗 أنشئ الرابط</button>
         <button class="btn ghost" id="hwfClose">إغلاق</button>
       </div>
       <p class="feedback" id="hwfMsg"></p>
@@ -309,6 +314,7 @@
 <script src="assets/rooms/hall.js"></script>
 <script src="js/hall-look.js"></script>
 <script src="js/yard-look.js"></script>
+<script src="content/spelling-pools.js"></script>
 <script src="js/homework.js"></script>
 <script src="js/game.js"></script>
 </body>

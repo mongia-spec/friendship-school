@@ -4,11 +4,11 @@
 // لا يُهزم الوحش تمامًا قبل حل الواجب، وانتهاء الوقت يُضعف البطل. التصحيح عند المعلم؛ اللعبة لا تصحح الإجابات.
 // يُحمَّل قبل game.js، وgame.js يستدعي HW.init ثم HW.pending وHW.gate.
 (() => {
-  const KEY = 'shtshout-homework';
+  const KEY = 'shtshout-homework', WORDS_KEY = 'shtshout-words';
   const MAX_TEXT = 3000, MAX_Q = 40, DEFAULT_MINS = 15;
   const $ = (id) => document.getElementById(id);
   let ctx = { rooms: [], name: () => '', onTimeout: () => {} };
-  let items = [], draft = [], tickId = 0;
+  let items = [], draft = [], tickId = 0, words = null;
 
   function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* لا شيء */ } }
@@ -41,6 +41,15 @@
     try { d = decode(m[1]); } catch (e) { return -1; }
     if (!d || !Array.isArray(d.items) || !d.id) return -1;
     let added = 0;
+    if (d.words && Array.isArray(d.words.list) && d.words.list.length) {
+      const id = String(d.id).slice(0, 20);
+      if (!words || words.id !== id) added++;
+      words = {
+        id, topic: String(d.words.topic || '').slice(0, 60),
+        list: d.words.list.slice(0, 40).map((x) => ({ a: String(x.a || '').slice(0, 24), w: (Array.isArray(x.w) ? x.w : []).slice(0, 3).map((v) => String(v).slice(0, 24)) })).filter((x) => x.a),
+      };
+      try { localStorage.setItem(WORDS_KEY, JSON.stringify(words)); } catch (e) { /* لا شيء */ }
+    }
     d.items.forEach((it, k) => {
       if (!roomName(it.room)) return;
       const id = String(d.id).slice(0, 20) + '-' + k;
@@ -106,6 +115,8 @@
       b.onclick = () => openView(it, null);
       box.appendChild(b);
     });
+    $('hwWordsRow').hidden = !words;
+    if (words) $('hwWordsInfo').textContent = `كلمات المعلم في غرفة الإملاء${words.topic ? ': ' + words.topic : ''} (${words.list.length})`;
     $('hwListMsg').textContent = msg || '';
     const n = pendingItems().length;
     $('btnHomework').textContent = n ? `📥 واجباتي (${n})` : '📥 واجباتي';
@@ -218,6 +229,13 @@
       row.append(t, x); box.appendChild(row);
     });
   }
+  // كلمات الإملاء: كلمة في كل سطر أو مفصولة بفواصل، ويمكن كتابة الأخطاء بعدها: مسؤول | مسئول | مسأول
+  function readWords() {
+    return $('hwfWords').value.split(/\n/).flatMap((line) => {
+      if (line.includes('|')) { const p = line.split('|').map((x) => x.trim()).filter(Boolean); return p.length ? [{ a: p[0], w: p.slice(1, 4) }] : []; }
+      return line.split(/[،,]/).map((x) => x.trim()).filter(Boolean).map((a) => ({ a, w: [] }));
+    }).slice(0, 40);
+  }
   // يأخذ ما في النموذج: يعيد true إن أُضيف واجب أو كان النموذج فارغًا تمامًا
   function takeForm() {
     const title = $('hwfTitle').value.trim(), text = $('hwfText').value.trim(), url = $('hwfUrl').value.trim();
@@ -238,11 +256,12 @@
   }
   function makeLink() {
     if (!takeForm()) return;
-    if (!draft.length) { $('hwfMsg').textContent = 'أضف واجبًا واحدًا على الأقل.'; return; }
+    const list = readWords();
+    if (!draft.length && !list.length) { $('hwfMsg').textContent = 'أضف واجبًا أو كلمات إملاء.'; return; }
     const email = $('hwfEmail').value.trim();
     if (email && !safeEmail(email)) { $('hwfMsg').textContent = 'البريد الإلكتروني غير صحيح.'; return; }
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    const link = location.origin + location.pathname + '#hw=' + encode({ v: 2, id, teacher: $('hwfTeacher').value.trim(), email, items: draft });
+    const link = location.origin + location.pathname + '#hw=' + encode({ v: 2, id, teacher: $('hwfTeacher').value.trim(), email, items: draft, words: list.length ? { topic: $('hwfTopic').value.trim(), list } : undefined });
     $('hwfLink').value = link;
     $('hwfWhats').href = 'https://wa.me/?text=' + encodeURIComponent('واجب جديد في لعبة مدرسة الصداقة:\n' + link);
     $('hwfOut').hidden = false;
@@ -263,6 +282,8 @@
       try { await navigator.clipboard.writeText($('hwfLink').value); $('hwfMsg').textContent = 'نُسخ الرابط ✅'; }
       catch (e) { document.execCommand('copy'); $('hwfMsg').textContent = 'نُسخ الرابط ✅'; }
     };
+    try { const w = JSON.parse(localStorage.getItem(WORDS_KEY)); if (w && Array.isArray(w.list) && w.list.length) words = w; } catch (e) { /* لا شيء */ }
+    $('hwWordsClear').onclick = () => { words = null; try { localStorage.removeItem(WORDS_KEY); } catch (e) { /* لا شيء */ } renderList('عادت أسئلة اللعبة الأصلية إلى غرفة الإملاء.'); };
     $('btnHomework').onclick = () => openList();
     $('hwListClose').onclick = () => { $('hwList').hidden = true; };
     $('hwPasteGo').onclick = () => {
@@ -274,9 +295,9 @@
     if (location.hash.startsWith('#hw=')) {
       const n = addFromLink(location.hash);
       history.replaceState(null, '', location.pathname + location.search);
-      openList(n < 0 ? 'رابط الواجب غير صحيح. اطلب من معلمك رابطًا جديدًا.' : n > 0 ? 'وصلك واجب جديد من معلمك! اذهب إلى غرفته في الممر.' : '');
+      openList(n < 0 ? 'رابط الواجب غير صحيح. اطلب من معلمك رابطًا جديدًا.' : n > 0 ? 'وصلك جديد من معلمك! اذهب إلى غرفته في الممر.' : '');
     } else renderList();
   }
 
-  window.HW = { init, pending, gate, openList };
+  window.HW = { init, pending, gate, openList, words: () => words };
 })();

@@ -27,7 +27,7 @@ function loadSave() {
   try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; }
 }
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
 }
 
 /* ---------------- المحرك ---------------- */
@@ -1362,11 +1362,44 @@ function warnMonster() { warnHero(starsNearby() ? 'warn-' + (Math.random() * 4 |
 function missMonster() { if (roomRun) { roomRun.r.monster.laugh = 0.8; roomRun.wrong++; } hurtHero(); SFX.play('bad'); }
 
 // تحدي البلاطات: يقف اللاعب على البلاطة التي تحمل الجواب
+// وحش الإملاء يطارد البطل أثناء البلاطات؛ إذا أمسكه أو أخطأ عاد إلى الباب وتغيّرت أماكن الإجابات
+function monsterHome(r) {
+  const c = roomPos(r.i);
+  r.monster.g.position.set(c.x + 5.5, 0, c.z - 5.5);
+  r.monsterCol.on = true;
+}
+async function roomCaught(hurt) {
+  const rr = roomRun, r = rr.r;
+  if (rr.catching) return;
+  rr.catching = true;
+  G.lock++;
+  if (hurt) hurtHero(hurt);
+  SFX.play('boo');
+  r.monster.laugh = 1;
+  burst(P.pos.clone().setY(1), 0xff6b6b, 24, 4);
+  toast('أمسكك الوحش! عُد إلى الباب وحاول من جديد', 'bad', 2600);
+  await fade(true, true);
+  placePlayer(r.exitFront.x, r.exitFront.z - 3.5, PI);
+  monsterHome(r);
+  if (rr.layout) rr.layout();
+  rr.chaseWait = 3.5; rr.chaseOn = true; rr.lastTile = null;
+  await fade(false);
+  G.lock--;
+  rr.catching = false;
+}
 function stepTiles(st) {
   const rr = roomRun;
   return new Promise((res) => {
-    const opts = shuffle(st.options.slice());
-    rr.r.tiles.forEach((t, k) => { t.word = opts[k]; setLabel(t.lb, opts[k]); t.lb.visible = true; t.on = true; t.mesh.material = mat(0xfff3d6); });
+    rr.layout = () => {
+      const opts = shuffle(st.options.slice());
+      rr.r.tiles.forEach((t, k) => {
+        const w = opts[k];
+        t.word = w || ''; t.on = !!w; t.lb.visible = !!w; t.mesh.material = mat(0xfff3d6);
+        if (w) setLabel(t.lb, w);
+      });
+    };
+    rr.layout();
+    rr.chaseOn = !!rr.chase; rr.chaseWait = 3.5;
     riddleText(st.q + ' ← قف على الجواب');
     let wrongHere = 0;
     rr.onTile = (t) => {
@@ -1374,11 +1407,13 @@ function stepTiles(st) {
         SFX.play('good'); t.mesh.material = mat(0x7be3a6); toast(`صحيح! «${st.answer}»`, 'good');
         rr.r.tiles.forEach((tt) => { tt.on = false; });
         rr.onTile = null;
+        if (rr.chase) { rr.chaseOn = false; monsterHome(rr.r); }
         wait(0.9).then(() => { rr.r.tiles.forEach((tt) => { tt.lb.visible = false; tt.mesh.material = mat(0xfff3d6); }); res(); });
       } else {
         missMonster(); wrongHere++;
         t.mesh.material = mat(0xffb3b3);
         wait(0.9).then(() => { if (t.on) t.mesh.material = mat(0xfff3d6); });
+        if (rr.chase) { roomCaught(0).then(() => toast(`«${t.word}»: ${wrongMsg()}${wrongHere >= 2 ? ' ' + rr.r.data.hint : ''}`, 'bad', 3600)); return; }
         toast(`«${t.word}»: ${wrongMsg()}${wrongHere >= 2 ? ' ' + rr.r.data.hint : ''}`, 'bad', 3600);
       }
     };
@@ -1480,10 +1515,41 @@ async function homeworkGate(id) {
   await HW.gate(id);
   G.lock--;
 }
+// أخطاء إملائية مقنعة تُولَّد من الكلمة نفسها، حين لا يكتب المعلم الخيارات الخاطئة
+const SIMILAR = ['أإاءؤئ', 'ةهت', 'ضظد', 'ذزد', 'سص', 'تط', 'ىاي', 'قك', 'حه'];
+function misspell(word) {
+  const out = new Set(), ch = [...word];
+  ch.forEach((c, i) => SIMILAR.forEach((g) => {
+    if (!g.includes(c)) return;
+    for (const v of g) if (v !== c) out.add(ch.slice(0, i).join('') + v + ch.slice(i + 1).join(''));
+  }));
+  out.delete(word);
+  return shuffle([...out]);
+}
+const orderStep = (w) => { const plain = w.replace(/[\u064B-\u0652]/g, ''); return { type: 'order', title: `أعد حروف الكلمة إلى مكانها: «${plain}»`, items: [...plain] }; };
+function spellingSteps() {
+  const custom = HW.words();
+  if (custom) {
+    const steps = [];
+    custom.list.forEach((x) => {
+      const wrong = x.w.concat(misspell(x.a).filter((v) => !x.w.includes(v))).slice(0, 3);
+      if (wrong.length) steps.push({ type: 'tiles', q: `${custom.topic ? custom.topic + ': ' : ''}أيّ الكتابات صحيحة؟`, answer: x.a, options: [x.a, ...wrong] });
+      steps.push(orderStep(x.a));
+    });
+    return steps;
+  }
+  const g = gradeData(), base = (g && g.spelling && g.spelling.steps) || BASE_CONTENT.steps.spelling;
+  const pool = (window.SPELLING_POOLS || {})[G.grade];
+  if (!pool) return base;
+  const tiles = shuffle(pool.tiles.concat(base.filter((s) => s.type === 'tiles')).map((s) => Object.assign({ type: 'tiles' }, s))).slice(0, 6);
+  const words = shuffle(pool.words.slice()).slice(0, 3).map(orderStep);
+  return [tiles[0], tiles[1], words[0], tiles[2], tiles[3], words[1], tiles[4], tiles[5], words[2]];
+}
 async function startRoomFight(r) {
   const d = r.data, c = roomPos(r.i);
+  if (r.room.id === 'spelling') d.steps = spellingSteps();
   const units = d.steps.reduce((n, st) => n + (st.type === 'collect' ? st.items.length : 1), 0);
-  roomRun = { r, active: true, done: 0, total: units, health: 100, wrong: 0, onTile: null, onKey: null, keys: [] };
+  roomRun = { r, active: true, done: 0, total: units, health: 100, wrong: 0, onTile: null, onKey: null, keys: [], chase: r.room.id === 'spelling' };
   $('monsterName').textContent = d.monster.name;
   setRoomHealth(100);
   $('monsterBar').hidden = false;
@@ -1551,6 +1617,7 @@ async function winRoom(r) {
     await say(lines);
   }
   G.cleared.add(r.room.id);
+  if (r.room.id === 'spelling' && HW.words()) G.wordsDone = HW.words().id;
   setEnergy(G.energy + 30);
   gainSkill(r.room.id, 3, RX.skillWin);
   G.cam = null;
@@ -1575,6 +1642,7 @@ function setupRoom(r) {
     if (!team.some((t) => t.obj === r.captive)) { r.captive.visible = true; r.captive.scale.setScalar(1); r.captive.position.copy(r.cagePos); }
   }
 }
+const newWords = () => { const w = HW.words(); return !!w && G.wordsDone !== w.id; };
 function roomState(i) {
   const room = SC.rooms[i];
   if (i === 0) return G.stage === 'done' ? 'done' : 'open';
@@ -1627,6 +1695,19 @@ function updateRoom(dt) {
     if (tile && tile !== roomRun.lastTile) roomRun.onTile(tile);
     roomRun.lastTile = tile || null;
   }
+  if (roomRun.chaseOn && roomRun.onTile && G.lock === 0) {
+    if (roomRun.chaseWait > 0) {
+      roomRun.chaseWait -= dt;
+      if (roomRun.chaseWait <= 0) { r.monsterCol.on = false; SFX.play('growl'); warnMonster(); }
+    } else {
+      const g = r.monster.g, dx = P.pos.x - g.position.x, dz = P.pos.z - g.position.z, d = Math.hypot(dx, dz);
+      const sp = 1.5 + G.grade * 0.12;   // أسرع قليلًا في الصفوف الأعلى، وأبطأ دائمًا من مشي البطل
+      if (d > 0.1) { g.position.x += dx / d * sp * dt; g.position.z += dz / d * sp * dt; }
+      collide(g.position, 1.0);
+      g.position.y = 0;
+      if (d < 1.5) roomCaught(12);
+    }
+  }
   roomRun.keys.forEach((k, n) => {
     if (k.done) return;
     k.g.position.y = 1.2 + Math.sin(t * 2.5 + n) * 0.25;
@@ -1660,6 +1741,7 @@ async function enterRoom(i) {
   await fade(true);
   const r = buildRoom(i);
   G.room = i;
+  if (SC.rooms[i].id === 'spelling' && newWords()) G.cleared.delete('spelling');
   setupRoom(r);
   setArea('room');
   placePlayer(r.exitFront.x, r.exitFront.z - 3.5, PI);
@@ -1760,7 +1842,7 @@ window.addEventListener('keydown', (e) => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   keys[e.code] = true;
-  if (!$('dialog').hidden && ['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code)) { advanceDialog(); return; }
+  if (!$('dialog').hidden && ['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code)) { userAdvance(); return; }
   if (e.code === 'Space') jumpQueued = true;
   if (e.code === 'KeyE' || e.code === 'Enter') useQueued = true;
   if (e.code === 'Escape' && G.playing) togglePause();
@@ -1793,7 +1875,7 @@ function moveStick(e) {
   joy.x = dx / max; joy.y = -dy / max;
 }
 $('tJump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpQueued = true; });
-$('tUse').addEventListener('pointerdown', (e) => { e.preventDefault(); if (!$('dialog').hidden) advanceDialog(); else useQueued = true; });
+$('tUse').addEventListener('pointerdown', (e) => { e.preventDefault(); if (!$('dialog').hidden) userAdvance(); else useQueued = true; });
 $('tRun').addEventListener('pointerdown', (e) => { e.preventDefault(); touchRun = !touchRun; $('tRun').style.background = touchRun ? '#ffc93c' : ''; });
 
 /* ---------------- الحوار ---------------- */
@@ -1833,7 +1915,7 @@ function nextLine() {
   por.innerHTML = '';
   if (sp.img) { const im = new Image(); im.src = S[sp.img].src; im.alt = C.names[line.who]; por.appendChild(im); }
   else { const d = document.createElement('div'); d.className = 'ph-face'; d.style.background = sp.bg; d.textContent = sp.face; por.appendChild(d); }
-  dlg.full = line.text; dlg.shown = 0;
+  dlg.full = line.text; dlg.shown = 0; dlg.lineAt = performance.now();
   clearInterval(dlg.timer); clearTimeout(dlg.autoT);
   $('dlgText').textContent = '';
   const src = VOICES[line.id];
@@ -1916,6 +1998,11 @@ function showText() {
     if (dlg.shown >= dlg.full.length) clearInterval(dlg.timer);
   }, 28);
 }
+// ضغطة عابرة (مثل E التي فتحت الباب) لا تقطع الجملة في أول ثانيتين
+function userAdvance() {
+  if ($('dialog').classList.contains('voiced') && performance.now() - (dlg.lineAt || 0) < 2000) return;
+  advanceDialog();
+}
 function advanceDialog() {
   if ($('dialog').hidden) return;
   if ($('dialog').classList.contains('voiced')) { voice.pause(); nextLine(); return; }
@@ -1924,7 +2011,7 @@ function advanceDialog() {
 }
 const voice = new Audio();
 const VOICES = window.VOICES || {};
-$('dialog').addEventListener('click', advanceDialog);
+$('dialog').addEventListener('click', userAdvance);
 $('dlgReplay').addEventListener('click', (e) => {
   e.stopPropagation();
   clearTimeout(dlg.autoT);
@@ -2012,7 +2099,7 @@ function openOrder(o = {}) {
       if (placed.includes(null)) { fb.textContent = o.items ? 'ضع كل القطع أولًا.' : 'ضع كل الصفحات أولًا.'; fb.style.color = '#ff6b6b'; return; }
       tries++;
       let wrong = 0;
-      placed.forEach((i, k) => { if (i === k) locked[k] = true; else wrong++; });
+      placed.forEach((i, k) => { if (i === k || (o.items && o.items[i] === o.items[k])) locked[k] = true; else wrong++; });
       render();
       if (!wrong) {
         fb.textContent = 'أحسنت! القصة مرتّبة. 🎉'; fb.style.color = '#2bb673';
@@ -2403,6 +2490,7 @@ async function exitLibrary() {
   yard.doors[0].arrow.visible = false;
   yard.doors[0].leaf.material = mat(0x7be3a6);
   yard.doors[0].glow.visible = false;
+  tip('');
   // باب الغرفة الثانية يرتجف وتهرب منه الحروف
   const d2 = yard.doors[1];
   G.cam = { pos: new V3(4, 3, -14), look: new V3(11, 2.5, -24), speed: 3 };
@@ -2421,10 +2509,14 @@ async function exitLibrary() {
       e.l.position.set(11 + Math.cos(e.a) * kk * 6, 2.4 + Math.sin(kk * PI) * 3, -23.4 + kk * 5 + Math.sin(e.a) * kk * 2);
     });
   });
+  if (!yard.mongia) { yard.mongia = charSprite('mongia', 1.7); (window.extraChars = window.extraChars || []).push(yard.mongia); }
+  yard.mongia.position.set(2.8, 0, -15.5);
+  yard.mongia.visible = true;
   await say(C.ending.slice(0, 2));
   await shake;
   d2.grp.rotation.z = 0;
   await say(C.ending.slice(2));
+  yard.mongia.visible = false;
   escapees.forEach((e) => scene.remove(e.l));
   G.stage = 'done'; save();
   SFX.play('win');
@@ -2472,7 +2564,7 @@ for (let i = 0; i < 13; i++) {
     at: () => hall.doors[i] && hall.doors[i].front, r: 2.3,
     get label() {
       const st = roomState(i), nm = SC.rooms[i].name;
-      const hw = HW.pending(SC.rooms[i].id) ? ' 📝 فيها واجب' : '';
+      const hw = HW.pending(SC.rooms[i].id) ? ' 📝 فيها واجب' : SC.rooms[i].id === 'spelling' && newWords() ? ' 📝 كلمات جديدة' : '';
       return st === 'locked' ? `🔒 ${nm}` : st === 'done' ? `${nm} ✅${hw}` : `ادخل ${nm}${hw}`;
     },
     on: () => G.area === 'hall',
@@ -2869,7 +2961,7 @@ function startPlaying() {
   $('touch').hidden = !isTouch;
 }
 function resetProgress() {
-  G.stars.clear(); G.cleared.clear(); G.skills = {}; G.energy = 100; renderSkills();
+  G.stars.clear(); G.cleared.clear(); G.skills = {}; G.energy = 100; G.wordsDone = ''; renderSkills();
   team.length = 0; renderTeam();
   allStars().forEach((s) => { s.obj.visible = true; });
 }
@@ -2890,6 +2982,7 @@ async function continueGame(sv) {
   sv.stars.forEach((s) => G.stars.add(s)); applyStars();
   G.skills = sv.skills || {}; renderSkills();
   G.energy = sv.energy === undefined ? 100 : sv.energy;
+  G.wordsDone = sv.wordsDone || '';
   G.cleared = new Set(sv.cleared || []);
   setHero(sv.hero || 'boy');
   setPlayerName(sv.name || '');
