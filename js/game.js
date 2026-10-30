@@ -1756,7 +1756,7 @@ async function startRoomFight(r) {
     else {
       $('riddle').hidden = true;
       startAttack(attackSeconds(st));
-      if (st.type === 'order') await openOrder({ title: qText(st, 'title'), hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: gt(d.hint) });
+      if (st.type === 'order') await openOrder({ alts: st.alts, title: qText(st, 'title'), hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: gt(d.hint) });
       else if (st.type === 'choose') await openQuiz(st, title, st.custom ? 'custom' : listenId(r.room.id, k));
       else if (st.type === 'memory') { stopAttack(); await stepMemory(st, title); }
       stopAttack();
@@ -2446,10 +2446,12 @@ function openOrder(o = {}) {
       if (placed.includes(null)) { fb.textContent = o.items ? 'ضع كل القطع أولًا.' : 'ضع كل الصفحات أولًا.'; fb.style.color = '#ff6b6b'; return; }
       tries++;
       let wrong = 0;
-      placed.forEach((i, k) => { if (i === k || (o.items && o.items[i] === o.items[k])) locked[k] = true; else wrong++; });
+      const seq = placed.map((i) => pages[i]);
+      const altOk = (o.alts || []).some((a) => a.length === seq.length && a.every((w, k) => w === seq[k]));
+      placed.forEach((i, k) => { if (altOk || i === k || (o.items && o.items[i] === o.items[k])) locked[k] = true; else wrong++; });
       render();
       if (!wrong) {
-        fb.textContent = gt('أحسنت! القصة مرتّبة. 🎉'); fb.style.color = '#2bb673';
+        fb.textContent = gt(o.items ? 'أحسنت! الترتيب صحيح. 🎉' : 'أحسنت! القصة مرتّبة. 🎉'); fb.style.color = '#2bb673';
         SFX.play('good');
         setTimeout(() => { panel.hidden = true; G.lock--; resolve(tries); }, 1300);
         return;
@@ -3397,6 +3399,13 @@ function togglePause() {
 // أسئلة كل غرفة ونصوص المكتبة على قدر مستوى التلميذ: content/grades-*.js
 // المحتوى الأصلي في rooms.js وlevel1.js يبقى احتياطًا لأي صف بلا محتوى خاص.
 const GRADE_NAMES = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع'];
+// قرار الأستاذة منجية في أسئلة الترتيب: عنوان يحدد نوع الجملة في النحو، وقبول كل ترتيب صحيح
+(function applyOrderRules() {
+  const rules = window.ORDER_RULES || {};
+  const fix = (st) => { if (st.type !== 'order') return; const r = rules[st.items.join('|')]; if (r) Object.assign(st, r); };
+  Object.values(RC).forEach((room) => (room.steps || []).forEach(fix));
+  Object.values(window.GRADES || {}).forEach((g) => Object.values(g).forEach((room) => (room.steps || []).forEach(fix)));
+})();
 const BASE_CONTENT = { pages: C.story.pages, rounds: C.wordBridge.rounds, steps: Object.fromEntries(Object.keys(RC).map((id) => [id, RC[id].steps])) };
 const gradeData = () => (window.GRADES || {})[G.grade];
 function applyGrade(g) {
