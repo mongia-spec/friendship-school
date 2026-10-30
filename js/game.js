@@ -729,7 +729,7 @@ function buildYard() {
     for (let k = 0; k < 9; k++) box(0.08, 4.4, 0.08, 0x1d1d24, -s * (0.25 + k * 0.42), 2.3, 0, gate);
     box(4, 0.15, 0.12, 0xd4a64a, -s * 1.95, 4.4, 0, gate); box(4, 0.15, 0.12, 0xd4a64a, -s * 1.95, 0.6, 0, gate);
     gate.rotation.y = s * 1.1;
-    const flag = signPlane('مدرسة\nالصداقة', 1.8, { size: 54, color: '#1d2a5c', bg: '#fbf6ea', border: '#d4a64a', maxW: 300 });
+    const flag = signPlane('مدرسة\nالأصدقاء', 1.8, { size: 54, color: '#1d2a5c', bg: '#fbf6ea', border: '#d4a64a', maxW: 300 });
     flag.position.set(s * 6.5, 3.2, 28.35);
     // سور منخفض
     box(26, 1.2, 0.6, 0xf3e6cf, s * 21, 0.6, 28.5);
@@ -1365,7 +1365,7 @@ function friendStrike() {
   rr.heal = (rr.heal || 0) - 3;
   burst(f.obj.position.clone().add(new V3(0, 1.2, 0)), 0x7be3a6, 14, 3);
   burst(m.g.position.clone().add(new V3(0, 2, 0)), 0xffd23f, 14, 4);
-  toast(`💥 ${f.name} يضرب الوحش معك!`, 'good', 2000);
+  toast(`💥 ضربة من ${f.name} للوحش!`, 'good', 2000);
 }
 function refreshAsk() {
   const rr = roomRun, st = rr && rr.cur && rr.cur.st;
@@ -1391,7 +1391,7 @@ function askFriend() {
     if (b) { wrong = b.textContent; b.disabled = true; b.classList.add('no'); }
   }
   burst(f.obj.position.clone().add(new V3(0, 1.2, 0)), 0x7be3a6, 12, 3);
-  if (wrong) toast(`${f.name}: أنا متأكد أن «${wrong}» ليست الجواب!`, 'good', 3200);
+  if (wrong) toast(`${f.name}: أعرف أن «${wrong}» ليست الجواب!`, 'good', 3200);
   refreshAsk();
 }
 function startAttack(sec) {
@@ -1819,7 +1819,7 @@ async function winRoom(r) {
     SFX.play('win');
     await say(lines.slice(1));
     joinTeam(r.captive, d.captive.name);
-    toast(`انضمّ ${d.captive.name} إلى الفريق! 🔑`, 'good', 3000);
+    toast(`${d.captive.name} الآن مع الفريق! 🔑`, 'good', 3000);
   } else {
     SFX.play('win');
     await say(lines);
@@ -1943,7 +1943,7 @@ function updateRoom(dt) {
         (roomRun.blocked = roomRun.blocked || []).push(blocker.obj);
         roomRun.stun = 2.5;
         burst(g.position.clone().add(new V3(0, 1.6, 0)), 0x7be3a6, 26, 5);
-        toast(`🛡️ ${blocker.name} يعترض الوحش! أسرع!`, 'good', 2400);
+        toast(`🛡️ ${blocker.name}: سأعترض الوحش! أسرع!`, 'good', 2400);
       }
       if (d > 0.1) { g.position.x += dx / d * sp * dt; g.position.z += dz / d * sp * dt; }
       collide(g.position, 1.0);
@@ -2413,7 +2413,7 @@ function openOrder(o = {}) {
       fb.style.color = '#ff6b6b';
       fb.textContent = tries > 1
         ? (o.items ? 'القطع الخضراء في مكانها. ' + (o.hint2 || 'فكّر: ماذا يأتي بعد آخر قطعة صحيحة؟') : 'الصفحات الخضراء في مكانها. اقرأ آخر صفحة صحيحة، وابحث عمّا حدث بعدها.')
-        : (o.items ? `${wrong} قطع ليست في مكانها. الخضراء صحيحة.` : `${wrong} صفحات ليست في مكانها. الخضراء صحيحة، أعد قراءة الباقي.`);
+        : (o.items ? `عدد القطع التي ليست في مكانها: ${wrong}. الخضراء صحيحة.` : `عدد الصفحات التي ليست في مكانها: ${wrong}. الخضراء صحيحة، أعد قراءة الباقي.`);
       setTimeout(() => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); render(); }, 1100);
     };
     fb.textContent = '';
@@ -2852,11 +2852,11 @@ const interactables = [
   { at: () => yard.doors[0].pos, r: 4.2, label: 'ادخل المدرسة', on: () => (G.stage === 'yard2' || G.stage === 'done') && G.area === 'yard', act: () => enterHall() },
   { at: () => hall.backFront, r: 2.6, label: 'اخرج إلى الساحة', on: () => G.area === 'hall', act: exitToYard },
   { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'ارجع إلى الممر', on: () => G.area === 'room' && !(roomRun && roomRun.active), act: () => enterHall(G.room) },
-  { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'الباب مقفل حتى تهزم الوحش', on: () => G.area === 'room' && !!(roomRun && roomRun.active), act: async () => toast('لا تقلق! الخطأ لا يعاقبك. أكمل التحدي لتهزم الوحش.', 'bad', 2600) },
+  { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'الباب مقفل حتى تهزم الوحش', on: () => G.area === 'room' && !!(roomRun && roomRun.active), act: async () => toast('لا تقلق! الخطأ يعلّمنا، فحاول من جديد. أكمل التحدي لتهزم الوحش.', 'bad', 2600) },
   { at: () => rooms[11] && (rooms[11].talkAt || rooms[11].mongia.position), r: 3.4, label: 'تحدّث إلى ماما منجية', on: () => G.area === 'room' && G.room === 11 && G.cleared.has('mongia'), act: () => say(RX.mongiaAfter) },
-  { at: () => yard.doors[0].pos, r: 4.2, label: 'تحدّث إلى شتشوتة أولًا', on: () => G.stage === 'yard' && G.area === 'yard', act: async () => toast('شتشوتة تريد أن تخبرك شيئًا أولًا', 'bad') },
+  { at: () => yard.doors[0].pos, r: 4.2, label: 'تحدّث إلى شتشوتة أولًا', on: () => G.stage === 'yard' && G.area === 'yard', act: async () => toast('شتشوتة تريد أن تخبرك بشيء أولًا', 'bad') },
   { at: () => lib.lectern.position, r: 2.4, label: 'رتّب صفحات القصة', on: () => G.stage === 'libA' && G.pages >= 5 && G.area === 'library', act: solveStory },
-  { at: () => lib.lectern.position, r: 2.4, label: 'منصة القراءة: اجمع الصفحات أولًا', on: () => G.stage === 'libA' && G.pages < 5 && G.area === 'library', act: async () => toast(`ما زالت ${5 - G.pages} صفحات مبعثرة`, 'bad') },
+  { at: () => lib.lectern.position, r: 2.4, label: 'منصة القراءة: اجمع الصفحات أولًا', on: () => G.stage === 'libA' && G.pages < 5 && G.area === 'library', act: async () => toast(`الصفحات المبعثرة المتبقية: ${5 - G.pages}`, 'bad') },
   { at: () => new V3(LX, 0, -30.5), r: 3, label: 'اخرج من باب النجاة', on: () => G.stage === 'rescued' && G.area === 'library', act: exitLibrary },
 ];
 interactables.push({ at: () => hall.doors && hall.doors[11] && hall.doors[11].front, r: 3.4, label: 'خذوا الكتب والفيتامينات', on: () => G.area === 'hall' && searchDone() && !G.vitamins, act: takeBooks });

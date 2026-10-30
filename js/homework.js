@@ -152,8 +152,8 @@
   function answersText(it) {
     const lines = [];
     for (let k = 0; k < it.n; k++) lines.push(`${k + 1}) ${(it.answers[k] || '').trim()}`);
-    const late = it.late ? ` · انتهى الوقت ${it.late} مرة` : '';
-    return `${lines.join('\n')}\n\nالوقت: ${Math.max(1, Math.round((it.used || 0) / 60))} دقيقة من ${it.mins}${late}`;
+    const late = it.late ? ` · مرات انتهاء الوقت: ${it.late}` : '';
+    return `${lines.join('\n')}\n\nالوقت بالدقائق: ${Math.max(1, Math.round((it.used || 0) / 60))} من ${it.mins}${late}`;
   }
   // ملفات Google Drive تُعرض داخل اللعبة؛ وغيرها يُفتح في صفحة مستقلة
   function embedUrl(u) {
@@ -285,7 +285,7 @@
     box.innerHTML = '';
     draft.forEach((d, k) => {
       const row = document.createElement('div'); row.className = 'hw-draft-row';
-      const t = document.createElement('span'); t.textContent = `${roomName(d.room)}: ${d.title} · ${d.n} أسئلة · ${d.mins} دقيقة`;
+      const t = document.createElement('span'); t.textContent = `${roomName(d.room)}: ${d.title} · عدد الأسئلة: ${d.n} · الوقت بالدقائق: ${d.mins}`;
       const x = document.createElement('button'); x.textContent = '✕'; x.title = 'حذف'; x.onclick = () => { draft.splice(k, 1); renderDraft(); };
       row.append(t, x); box.appendChild(row);
     });
@@ -382,7 +382,7 @@
     let v, bad = 0;
     if (Array.isArray(editList)) {
       v = editList.map((s) => { const c = cleanStep(s); if (!c) bad++; return c; }).filter(Boolean);
-      if (bad) { $('hweMsg').textContent = `${bad} من الأسئلة ناقصة: تأكد من السؤال والجواب والخيارات.`; return; }
+      if (bad) { $('hweMsg').textContent = `عدد الأسئلة الناقصة: ${bad}. تأكد من السؤال والجواب والخيارات.`; return; }
       if (!v.length) { $('hweMsg').textContent = 'أبقِ سؤالًا واحدًا على الأقل، أو اضغط «إرجاع أسئلة اللعبة».'; return; }
     } else {
       v = cleanLibrary(editList);
@@ -391,7 +391,7 @@
     (custom[g] = custom[g] || {})[id] = v;
     saveCustom();
     $('hweState').textContent = 'هذه أسئلتك المعدّلة.';
-    $('hweMsg').textContent = 'حُفظ على هذا الجهاز ✅ يبدأ العمل بها عند دخول الغرفة.';
+    $('hweMsg').textContent = 'حُفظت أسئلتك على هذا الجهاز ✅ يبدأ العمل بها عند دخول الغرفة.';
     renderList();
   }
   const sharePayload = () => ({ v: 3, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), items: [], custom });
@@ -457,13 +457,13 @@
     $('hwPasteGo').onclick = () => {
       const n = addFromLink($('hwPaste').value);
       $('hwPaste').value = '';
-      openList(n < 0 ? 'هذا الرابط غير صحيح.' : n === 0 ? 'هذا الواجب موجود عندك من قبل.' : `أُضيف ${n} واجب ✅`);
+      openList(n < 0 ? 'هذا الرابط غير صحيح.' : n === 0 ? 'هذا الواجب موجود عندك من قبل.' : `عدد الإضافات الجديدة: ${n} ✅`);
     };
     // فتح الطالب رابط واجب
     if (location.hash.startsWith('#hw=')) {
       const n = addFromLink(location.hash);
       history.replaceState(null, '', location.pathname + location.search);
-      openList(n < 0 ? 'رابط الواجب غير صحيح. اطلب من معلمك رابطًا جديدًا.' : n > 0 ? 'وصلك جديد من معلمك! اذهب إلى غرفته في الممر.' : '');
+      openList(n < 0 ? 'رابط الواجب غير صحيح. اطلب من معلمك رابطًا جديدًا.' : n > 0 ? 'وصلك شيء جديد من معلمك! اذهب إلى غرفة الواجب في الممر.' : '');
     } else renderList();
   }
 
