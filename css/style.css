@@ -238,3 +238,5 @@ body.touch #keysHint { display: none; }
 @media (max-height: 640px) { #title .credit { display: none; } }
 /* الضبابية فوق الرسم ثلاثي الأبعاد ثقيلة على الأجهزة الضعيفة */
 .screen.dim { backdrop-filter: none; background: rgba(20, 12, 50, .78); }
+/* سطر الملكية يظهر كاملًا في الشاشات الضيقة */
+@media (max-width: 1000px) { #owner { white-space: normal; width: 94%; text-align: center; border-radius: 10px; } }

@@ -456,6 +456,7 @@
     $('btnHomework').onclick = () => openList();
     $('hwListClose').onclick = () => { $('hwList').hidden = true; };
     $('hwPasteGo').onclick = () => {
+      if (!$('hwPaste').value.trim()) { openList(say('الصق رابط الواجب في الخانة أولًا، ثم اضغط «أضف الواجب».')); $('hwPaste').focus(); return; }
       const n = addFromLink($('hwPaste').value);
       $('hwPaste').value = '';
       openList(n < 0 ? 'هذا الرابط غير صحيح.' : n === 0 ? 'هذا الواجب موجود عندك من قبل.' : `عدد الإضافات الجديدة: ${n} ✅`);
