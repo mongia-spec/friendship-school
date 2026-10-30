@@ -3280,6 +3280,8 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   step(dt);
   updateCamera(dt);
+  // خلف لوحة مفتوحة لا حاجة إلى رسم المشهد: نخفف الحمل على الأجهزة الضعيفة
+  if (document.querySelector('.screen.dim:not([hidden])')) return;
   renderer.render(scene, camera);
 }
 function step(dt) {
