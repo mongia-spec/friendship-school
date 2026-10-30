@@ -45,6 +45,7 @@
       if (options.length < 2) return null;
       const out = { type: s.type, q, answer, options };
       if (s.listen) out.listen = str(s.listen, 400);
+      if (s.base) out.base = true;
       return out;
     }
     if (s.type === 'order' || s.type === 'memory') {
@@ -52,6 +53,12 @@
       if (its.length < 2) return null;
       const out = { type: s.type, title: str(s.title, 200) || 'رتّب بالترتيب الصحيح', items: its };
       if (s.type === 'memory') out.show = clampInt(s.show, 2, 20, 6);
+      if (Array.isArray(s.alts)) {   // ترتيبات أخرى صحيحة تبقى ما دامت القطع نفسها
+        const same = (a) => Array.isArray(a) && a.map((o) => str(o, 80)).sort().join('|') === its.slice().sort().join('|');
+        const alts = s.alts.filter(same).map((a) => a.map((o) => str(o, 80))).slice(0, 12);
+        if (alts.length) out.alts = alts;
+      }
+      if (s.base) out.base = true;
       return out;
     }
     return null;
@@ -378,11 +385,14 @@
     $('hweMsg').textContent = '';
     renderEdit();
   }
+  const stepKey = ({ base, ...r }) => JSON.stringify(r);
   function saveEdit() {
     const [g, id] = editKey();
     let v, bad = 0;
     if (Array.isArray(editList)) {
-      v = editList.map((s) => { const c = cleanStep(s); if (!c) bad++; return c; }).filter(Boolean);
+      // السؤال الذي لم يغيّره المعلم يبقى من أسئلة اللعبة الأصلية
+      const orig = new Set((ctx.bank(g, id) || []).map((s) => cleanStep(s)).filter(Boolean).map(stepKey));
+      v = editList.map((s) => { const c = cleanStep(s); if (!c) { bad++; return null; } if (orig.has(stepKey(c))) c.base = true; else delete c.base; return c; }).filter(Boolean);
       if (bad) { $('hweMsg').textContent = `عدد الأسئلة الناقصة: ${bad}. تأكد من السؤال والجواب والخيارات.`; return; }
       if (!v.length) { $('hweMsg').textContent = 'أبقِ سؤالًا واحدًا على الأقل، أو اضغط «إرجاع أسئلة اللعبة».'; return; }
     } else {
@@ -403,6 +413,11 @@
     try { const cu = JSON.parse(localStorage.getItem(CUSTOM_KEY)); if (cu && typeof cu === 'object') { custom = {}; mergeCustom(cu); } } catch (e) { /* لا شيء */ }
     $('hweGrade').innerHTML = (ctx.grades || []).map((n, i) => `<option value="${i + 1}">الصف ${esc(n)}</option>`).join('');
     $('hweRoom').innerHTML = (ctx.editRooms || []).map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    $('hwtGrade').innerHTML = (ctx.grades || []).map((n, i) => `<option value="${i + 1}">الصف ${esc(n)}</option>`).join('');
+    $('hwtRoom').innerHTML = (ctx.allRooms || []).map((r) => `<option value="${r.i}"${r.id === 'mongia' ? ' selected' : ''}>${esc(r.name)}</option>`).join('');
+    $('hwfTry').onclick = () => { $('hwTeacher').hidden = true; $('hwTry').hidden = false; };
+    $('hwtClose').onclick = () => { $('hwTry').hidden = true; $('hwTeacher').hidden = false; };
+    $('hwtGo').onclick = () => { $('hwTry').hidden = true; ctx.tryRoom($('hwtHero').value, clampInt($('hwtGrade').value, 1, 9, 4), clampInt($('hwtRoom').value, 0, 20, 11)); };
     $('hwfEdit').onclick = () => { $('hwTeacher').hidden = true; $('hweLinkOut').hidden = true; loadEdit(); $('hwEdit').hidden = false; };
     $('hweClose').onclick = () => { $('hwEdit').hidden = true; $('hwTeacher').hidden = false; };
     $('hweGrade').onchange = loadEdit; $('hweRoom').onchange = loadEdit;

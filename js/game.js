@@ -27,6 +27,7 @@ function loadSave() {
   try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; }
 }
 function save() {
+  if (G.preview || G.picking) return;   // تجربة المعلم واختيار البطل قبل البدء لا يغيّران اللعب المحفوظ
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, kidnapped: G.kidnapped, vitamins: G.vitamins, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
 }
 
@@ -35,7 +36,7 @@ const GIRL_PHRASES = [
   ['أنت مختبئ', 'أنتِ مختبئة'], ['بطلك منهك', 'بطلتكِ منهكة'], ['فضعف بطلك', 'فضعفت بطلتكِ'], ['صار بطلك أقوى', 'صارت بطلتكِ أقوى'], ['بطلك', 'بطلتكِ'],
   ['بطلٌ جديد', 'بطلةٌ جديدةٌ'], ['يا بطل', 'يا بطلة'],
 ];
-const GIRL_WORDS = { تحرّك: 'تحرّكي', تستطيع: 'تستطيعين', أنقذتَ: 'أنقذتِ', جمعتَ: 'جمعتِ', حللتَ: 'حللتِ', أجبتَ: 'أجبتِ', أحسنت: 'أحسنتِ', اجتهدت: 'اجتهدتِ', حرّرته: 'حرّرتِه', تعلّمته: 'تعلّمتِه', أمسكك: 'أمسككِ', هاجمك: 'هاجمكِ', يراك: 'يراكِ', بعودتك: 'بعودتكِ', صفحاتك: 'صفحاتكِ', زملاءك: 'زملاءكِ', صديقك: 'صديقكِ', زميلك: 'زميلكِ', زميلًا: 'زميلًا', معلمك: 'معلمكِ', معلمتك: 'معلمتكِ', ستنصحك: 'ستنصحكِ', واجبك: 'واجبكِ', حلّك: 'حلّكِ', مهارتك: 'مهارتكِ', لديك: 'لديكِ', عندك: 'عندكِ', عينيك: 'عينيكِ', سرّك: 'سرّكِ', لك: 'لكِ', مستواك: 'مستواكِ', اسمك: 'اسمكِ', أنت: 'أنتِ', تقلق: 'تقلقي', تتعجّل: 'تتعجّلي', تحب: 'تحبّين', تجمعها: 'تجمعينها', عُد: 'عودي', خذ: 'خذي', افتح: 'افتحي', ركّز: 'ركّزي', تحدّث: 'تحدّثي', اضغط: 'اضغطي', اقفز: 'اقفزي', اجمع: 'اجمعي', اخرج: 'اخرجي', ادخل: 'ادخلي', اذهب: 'اذهبي', اقرأ: 'اقرئي', قف: 'قفي', فكّر: 'فكّري', حاول: 'حاولي', جرّب: 'جرّبي', انتبه: 'انتبهي', أسرع: 'أسرعي', أكمل: 'أكملي', اكتب: 'اكتبي', اسأل: 'اسألي', اسحب: 'اسحبي', احفظ: 'احفظي', كرّرها: 'كرّريها', كرّر: 'كرّري', رتّب: 'رتّبي', اختر: 'اختاري', أعد: 'أعيدي', انظر: 'انظري', ابحث: 'ابحثي', أغمض: 'أغمضي', ابدأ: 'ابدئي', تخيّل: 'تخيّلي', تذكّر: 'تذكّري', حلّ: 'حلّي', الصق: 'الصقي', نزّل: 'نزّلي', أرسل: 'أرسلي', اطلب: 'اطلبي', سلّمه: 'سلّميه' };
+const GIRL_WORDS = { اقرأ: 'اقرئي', رتّب: 'رتّبي', ضع: 'ضعي', أعد: 'أعيدي', ابحث: 'ابحثي', فكّر: 'فكّري', أغمض: 'أغمضي', عينيك: 'عينيكِ', تذكّر: 'تذكّري', استرجعها: 'استرجعيها', ذاكرتك: 'ذاكرتكِ', رأيتها: 'رأيتِها', رأيته: 'رأيتِه', مهاراتك: 'مهاراتكِ', اسأل: 'اسألي', تهزمني: 'تهزميني', ارجع: 'ارجعي', زملاءك: 'زملاءكِ', حرّر: 'حرّري', اختر: 'اختاري', ابدأ: 'ابدئي', تابع: 'تابعي', اضغط: 'اضغطي', تحرّك: 'تحرّكي', تستطيع: 'تستطيعين', أنقذتَ: 'أنقذتِ', جمعتَ: 'جمعتِ', حللتَ: 'حللتِ', أجبتَ: 'أجبتِ', أحسنت: 'أحسنتِ', اجتهدت: 'اجتهدتِ', حرّرته: 'حرّرتِه', تعلّمته: 'تعلّمتِه', أمسكك: 'أمسككِ', هاجمك: 'هاجمكِ', يراك: 'يراكِ', بعودتك: 'بعودتكِ', صفحاتك: 'صفحاتكِ', زملاءك: 'زملاءكِ', صديقك: 'صديقكِ', زميلك: 'زميلكِ', زميلًا: 'زميلًا', معلمك: 'معلمكِ', معلمتك: 'معلمتكِ', ستنصحك: 'ستنصحكِ', واجبك: 'واجبكِ', حلّك: 'حلّكِ', مهارتك: 'مهارتكِ', لديك: 'لديكِ', عندك: 'عندكِ', عينيك: 'عينيكِ', سرّك: 'سرّكِ', لك: 'لكِ', مستواك: 'مستواكِ', اسمك: 'اسمكِ', أنت: 'أنتِ', تقلق: 'تقلقي', تتعجّل: 'تتعجّلي', تحب: 'تحبّين', تجمعها: 'تجمعينها', عُد: 'عودي', خذ: 'خذي', افتح: 'افتحي', ركّز: 'ركّزي', تحدّث: 'تحدّثي', اضغط: 'اضغطي', اقفز: 'اقفزي', اجمع: 'اجمعي', اخرج: 'اخرجي', ادخل: 'ادخلي', اذهب: 'اذهبي', اقرأ: 'اقرئي', قف: 'قفي', فكّر: 'فكّري', حاول: 'حاولي', جرّب: 'جرّبي', انتبه: 'انتبهي', أسرع: 'أسرعي', أكمل: 'أكملي', اكتب: 'اكتبي', اسأل: 'اسألي', اسحب: 'اسحبي', احفظ: 'احفظي', كرّرها: 'كرّريها', كرّر: 'كرّري', رتّب: 'رتّبي', اختر: 'اختاري', أعد: 'أعيدي', انظر: 'انظري', ابحث: 'ابحثي', أغمض: 'أغمضي', ابدأ: 'ابدئي', تخيّل: 'تخيّلي', تذكّر: 'تذكّري', حلّ: 'حلّي', الصق: 'الصقي', نزّل: 'نزّلي', أرسل: 'أرسلي', اطلب: 'اطلبي', سلّمه: 'سلّميه' };
 const GIRL_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL_WORDS).sort((a, b) => b.length - a.length).join('|') + ')(?![\\u0621-\\u0652])', 'g');
 // لا نغيّر ما بين « » لأنه أمثلة ونصوص مقتبسة
 function outsideQuotes(text, fn) { return String(text).split(/(«[^»]*»)/).map((p, i) => (i % 2 ? p : fn(p))).join(''); }
@@ -49,7 +50,7 @@ function gt(text) {
 // في الأسئلة نحوّل الفعل الأول فقط وأفعال المواقف، حتى لا يتغير مثال نحوي داخل السؤال
 const GIRL_STEMS = { رتّب: 'رتّبي', 'رَتِّبِ': 'رَتِّبِي', 'رَتِّبْ': 'رَتِّبِي', أكمل: 'أكملي', 'أَكْمِلْ': 'أَكْمِلِي', 'أَكْمِلِ': 'أَكْمِلِي', اختر: 'اختاري', أعد: 'أعيدي', اقرأ: 'اقرئي' };
 const GIRL_SITUATION = { تأخّرتَ: 'تأخّرتِ', أنهيتَ: 'أنهيتِ', وجدتَ: 'وجدتِ', حصلتَ: 'حصلتِ', شعرتَ: 'شعرتِ', 'سَمِعْتَ': 'سَمِعْتِ', 'دَخَلْتَ': 'دَخَلْتِ', 'أَخَذْتَ': 'أَخَذْتِ', 'تَعَلَّمْتَ': 'تَعَلَّمْتِ', 'أَخْطَأْتَ': 'أَخْطَأْتِ', 'وَجَدْتَ': 'وَجَدْتِ', 'فَهِمْتَ': 'فَهِمْتِ', 'أَنْهَيْتَ': 'أَنْهَيْتِ', 'رَأَيْتَ': 'رَأَيْتِ', 'كَسَرْتَ': 'كَسَرْتِ', 'أَنْتَ': 'أَنْتِ', تولّيت: 'تولّيتِ', عندك: 'عندكِ', لديك: 'لديكِ', زميلك: 'زميلكِ', تريد: 'تريدين', 'تُرِيدُ': 'تُرِيدِينَ', تشعر: 'تشعرين', تؤجّل: 'تؤجّلين', تقضي: 'تقضين', تستعين: 'تستعينين' };
-const GIRL_QUESTIONS = [['ماذا تفعل', 'ماذا تفعلين'], ['ماذا تقول', 'ماذا تقولين'], ['ماذا تقصد', 'ماذا تقصدين'], ['ماذا تحمل', 'ماذا تحملين'], ['كيف تردّ', 'كيف تردّين'], ['كيف تراجعها', 'كيف تراجعينها'], ['كيف تراجع', 'كيف تراجعين'], ['كيف تقرأ', 'كيف تقرئين'], ['كيف تدوّن', 'كيف تدوّنين'], ['كيف تتصرّف', 'كيف تتصرّفين'], ['كيف تختبر', 'كيف تختبرين'], ['كيف تتحقّق', 'كيف تتحقّقين'], ['كيف تدرسه', 'كيف تدرسينه'], ['كيف تجعله', 'كيف تجعلينه'], ['متى تبدأ', 'متى تبدئين'], ['متى تحلّه', 'متى تحلّينه'], ['متى تأكل', 'متى تأكلين'], ['أن تجيب', 'أن تجيبي'], ['أن تستعير', 'أن تستعيري'], ['أن تقترح', 'أن تقترحي'], ['لتكوّن', 'لتكوّني'], ['لا توافق', 'لا توافقين']];
+const GIRL_QUESTIONS = [['عرض عليك', 'عرض عليكِ'], ['ماذا تفعل', 'ماذا تفعلين'], ['ماذا تقول', 'ماذا تقولين'], ['ماذا تقصد', 'ماذا تقصدين'], ['ماذا تحمل', 'ماذا تحملين'], ['كيف تردّ', 'كيف تردّين'], ['كيف تراجعها', 'كيف تراجعينها'], ['كيف تراجع', 'كيف تراجعين'], ['كيف تقرأ', 'كيف تقرئين'], ['كيف تدوّن', 'كيف تدوّنين'], ['كيف تتصرّف', 'كيف تتصرّفين'], ['كيف تختبر', 'كيف تختبرين'], ['كيف تتحقّق', 'كيف تتحقّقين'], ['كيف تدرسه', 'كيف تدرسينه'], ['كيف تجعله', 'كيف تجعلينه'], ['متى تبدأ', 'متى تبدئين'], ['متى تحلّه', 'متى تحلّينه'], ['متى تأكل', 'متى تأكلين'], ['أن تجيب', 'أن تجيبي'], ['أن تستعير', 'أن تستعيري'], ['أن تقترح', 'أن تقترحي'], ['لتكوّن', 'لتكوّني'], ['لا توافق', 'لا توافقين']];
 const SIT_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL_SITUATION).join('|') + ')(?![\\u0621-\\u0652])', 'g');
 function gq(text) {
   if (G.hero !== 'girl' || !text) return text;
@@ -61,7 +62,7 @@ function gq(text) {
   });
 }
 const qText = (st, key = 'q') => (st.custom ? st[key] : gq(st[key]));
-const GIRL_STATIC = ['#help', '#pause', '#skills', '#namePick', '#gradePick', '#hwList', '#hwView', '#fightBar'];
+const GIRL_STATIC = ['#dlgNext', '#orderReset', '#quizListen', '#btnEndGo', '#help', '#pause', '#skills', '#namePick', '#gradePick', '#hwList', '#hwView', '#fightBar'];
 const staticOrig = new Map();
 function applyGirlStatic() {
   GIRL_STATIC.forEach((sel) => {
@@ -1209,7 +1210,7 @@ function buildRoom(i) {
   };
   r.title = title;
   if (T === 'board' || T === 'class' || T === 'tests') {
-    board(room.board || (T === 'class' ? 'مرحبًا بكم في صف شتشوت' : 'لا تخف من الخطأ... الخطأ معلّم'));
+    board(room.board || (T === 'class' ? 'مرحبًا بكم في صف شتشوت' : 'لا تخافوا من الخطأ... الخطأ معلّم'));
     for (let row = 0; row < 2; row++) for (let col = -1; col <= 1; col++) desk(c.x + col * 4, c.z - 3 + row * 3.5);
   } else if (T === 'tree') {
     cyl(0.6, 0.9, 5, 0x8b5a2b, c.x, 2.5, c.z - 4);
@@ -1359,7 +1360,7 @@ function setRoomHealth(h) {
     const m = roomRun.r.monster;
     m.laugh = 1; SFX.play('growl');
     burst(m.g.position.clone().add(new V3(0, 2, 0)), 0xff5252, 30, 6);
-    toast(`😡 ${roomRun.r.data.monster.name}: ${rage === 1 ? 'لن تهزمني بسهولة!' : 'سأقاوم حتى آخر لحظة!'}`, 'bad', 2800);
+    toast(`😡 ${roomRun.r.data.monster.name}: ${gt(rage === 1 ? 'لن تهزمني بسهولة!' : 'سأقاوم حتى آخر لحظة!')}`, 'bad', 2800);
   }
   $('monsterFill').style.width = roomRun.health + '%';
   roomRun.r.monster.target = (0.55 + 0.6 * roomRun.health / 100) * (roomRun.r.monster.boss || 1);
@@ -1417,7 +1418,7 @@ function refreshAsk() {
   const can = !!st && (st.type === 'tiles' || st.type === 'choose') && !rr.askedNow;
   const f = can ? freedFriends().find((t) => !(rr.asked || []).includes(t.obj)) : null;
   $('btnAsk').hidden = !f;
-  if (f) $('btnAsk').textContent = `🙋 اسأل ${f.name} (H)`;
+  if (f) $('btnAsk').textContent = gt(`🙋 اسأل ${f.name} (H)`);
   $('fightBar').hidden = !f && !(rr && rr.attackMax);
 }
 function askFriend() {
@@ -1617,7 +1618,7 @@ async function stepMemory(st, title) {
   $('quiz').hidden = true;
   G.lock--;
   startAttack(attackSeconds(st));
-  await openOrder({ title: st.title || 'رتّب الكلمات كما رأيتها', hint: 'مِمْحاة مسح الكلمات! استرجعها من ذاكرتك.', items: st.items, poolH: 'الكلمات', slotsH: 'بالترتيب الذي رأيته', hint2: 'أغمض عينيك وتذكّر الصورة.' });
+  await openOrder({ title: st.title || 'رتّب الكلمات كما رأيتها', hint: 'مِمْحاة مسح الكلمات! استرجعها من ذاكرتك.', items: st.items, poolH: 'الكلمات', slotsH: gt('بالترتيب الذي رأيته'), hint2: 'أغمض عينيك وتذكّر الصورة.' });
 }
 // المراجعة: مفاتيح مضيئة في أرجاء الغرفة، عند كل مفتاح سؤال من غرفة سابقة
 function stepCollect(st) {
@@ -1672,12 +1673,14 @@ const orderStep = (w) => { const plain = w.replace(/[\u064B-\u0652]/g, ''); retu
 function customSteps(id) {
   const cu = HW.custom(G.grade, id);
   if (!Array.isArray(cu) || !cu.length) return null;
-  const list = cu.map((s) => Object.assign({ custom: true }, s));
+  // ما عدّله المعلم يُلعب كله، ويكمل الباقي من الأسئلة الأصلية حتى طول الغرفة المعتاد
+  const list = cu.map((s) => (s.base ? Object.assign({}, s) : Object.assign({ custom: true }, s)));
+  const mine = list.filter((s) => s.custom), rest = shuffle(list.filter((s) => !s.custom));
   const g = gradeData(), base = (g && g[id] && g[id].steps) || BASE_CONTENT.steps[id];
   if (base.some((s) => s.type === 'collect')) {     // غرفة المراجعة: أسئلة المعلم عند مفاتيح المعرفة
-    return [{ type: 'collect', items: list.filter((s) => s.options).slice(0, 7) }];
+    return [{ type: 'collect', items: mine.concat(rest).filter((s) => s.options).slice(0, 7) }];
   }
-  return shuffle(list);
+  return shuffle(mine.concat(rest).slice(0, Math.max(id === 'mongia' ? 12 : 10, mine.length)));
 }
 // كل أسئلة الغرفة لهذا الصف، لتظهر في لوحة المعلم
 function teacherBank(grade, id) {
@@ -1912,11 +1915,11 @@ function roomState(i) {
   if (i === 0) return G.stage === 'done' ? 'done' : 'open';
   if (RC[room.id]) {
     if (G.cleared.has(room.id)) return 'done';
-    if (room.id === 'mongia') return (searchDone() && G.vitamins) || ALL_OPEN ? 'open' : 'locked';
-    if (SEARCH_ROOMS.includes(room.id)) return G.kidnapped || HW.pending(room.id) || ALL_OPEN ? 'open' : 'locked';   // واجب المعلم يفتح الغرفة لهذا الطالب
+    if (room.id === 'mongia') return (searchDone() && G.vitamins) || ALL_OPEN || G.preview ? 'open' : 'locked';
+    if (SEARCH_ROOMS.includes(room.id)) return G.kidnapped || HW.pending(room.id) || ALL_OPEN || G.preview ? 'open' : 'locked';   // واجب المعلم يفتح الغرفة لهذا الطالب
     return 'open';   // يبدأ اللاعب بأي من الغرف الأولى
   }
-  if (room.theme === 'secret') return allCleared() || ALL_OPEN ? 'open' : 'locked';
+  if (room.theme === 'secret') return allCleared() || ALL_OPEN || G.preview ? 'open' : 'locked';
   return 'open';
 }
 // هل هُزمت كل الوحوش؟ (المكتبة وغرف المهارات)
@@ -2026,6 +2029,7 @@ async function enterHall(fromRoom = null) {
   await storyCheck();
 }
 async function storyCheck() {
+  if (G.preview) return;
   if (!G.kidnapped && sixFreed()) {
     G.kidnapped = true; save();
     refreshHallDoors();
@@ -2407,8 +2411,8 @@ function openOrder(o = {}) {
   return new Promise((resolve) => {
     G.lock++;
     const panel = $('order'), pool = $('orderPool'), slots = $('orderSlots'), fb = $('orderFb');
-    $('orderTitle').textContent = o.title || C.story.title;
-    $('orderHint').textContent = o.hint || C.story.hint;
+    $('orderTitle').textContent = gt(o.title || C.story.title);
+    $('orderHint').textContent = gt(o.hint || C.story.hint);
     $('orderPoolH').textContent = o.poolH || 'الصفحات المبعثرة';
     $('orderSlotsH').textContent = o.slotsH || 'القصة بالترتيب';
     const pages = o.items || C.story.pages;
@@ -2443,7 +2447,7 @@ function openOrder(o = {}) {
     }
     $('orderReset').onclick = () => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); fb.textContent = ''; render(); };
     $('orderCheck').onclick = () => {
-      if (placed.includes(null)) { fb.textContent = o.items ? 'ضع كل القطع أولًا.' : 'ضع كل الصفحات أولًا.'; fb.style.color = '#ff6b6b'; return; }
+      if (placed.includes(null)) { fb.textContent = gt(o.items ? 'ضع كل القطع أولًا.' : 'ضع كل الصفحات أولًا.'); fb.style.color = '#ff6b6b'; return; }
       tries++;
       let wrong = 0;
       const seq = placed.map((i) => pages[i]);
@@ -2456,12 +2460,12 @@ function openOrder(o = {}) {
         setTimeout(() => { panel.hidden = true; G.lock--; resolve(tries); }, 1300);
         return;
       }
-      hurtHero(); SFX.play('bad');
+      if (roomRun && roomRun.active) missMonster(); else { hurtHero(); SFX.play('bad'); }
       slots.querySelectorAll('li').forEach((li, k) => { if (!locked[k]) li.querySelector('.page-card')?.classList.add('no'); });
       fb.style.color = '#ff6b6b';
-      fb.textContent = tries > 1
+      fb.textContent = gt(tries > 1
         ? (o.items ? 'القطع الخضراء في مكانها. ' + (o.hint2 || 'فكّر: ماذا يأتي بعد آخر قطعة صحيحة؟') : 'الصفحات الخضراء في مكانها. اقرأ آخر صفحة صحيحة، وابحث عمّا حدث بعدها.')
-        : (o.items ? `عدد القطع التي ليست في مكانها: ${wrong}. الخضراء صحيحة.` : `عدد الصفحات التي ليست في مكانها: ${wrong}. الخضراء صحيحة، أعد قراءة الباقي.`);
+        : (o.items ? `عدد القطع التي ليست في مكانها: ${wrong}. الخضراء صحيحة.` : `عدد الصفحات التي ليست في مكانها: ${wrong}. الخضراء صحيحة، أعد قراءة الباقي.`));
       setTimeout(() => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); render(); }, 1100);
     };
     fb.textContent = '';
@@ -2738,7 +2742,7 @@ function showBooks() {
 }
 function updateSpellHud() {
   const w = C.spell.words;
-  $('riddle').innerHTML = `<small>${C.spell.title} · اقرأ الجملة على الباب</small>` +
+  $('riddle').innerHTML = `<small>${gt(C.spell.title + ' · اقرأ الجملة على الباب')}</small>` +
     w.map((x, i) => i < G.spellIdx ? `<span style="color:#2bb673">${x}</span>` : '<span style="opacity:.35">ـــــ</span>').join(' ');
 }
 async function touchBook(b) {
@@ -2880,7 +2884,7 @@ function showEnd(card = C.endCard) {
   $('endTitle').textContent = gt(card.title);
   $('endLine').textContent = gt(card.line);
   $('endNext').textContent = gt(card.next);
-  $('endStats').textContent = `نقاط مهاراتك: ${skillPoints()} · مستوى بطلك: ${powerLevel()} · الفريق: ${team.map((t) => t.name).join('، ')}`;
+  $('endStats').textContent = gt(`نقاط مهاراتك: ${skillPoints()} · مستوى بطلك: ${powerLevel()} · الفريق: ${team.map((t) => t.name).join('، ')}`);
   const cast = $('endCast');
   cast.innerHTML = '';
   const keys = ['shtshout', 'shtshouta', 'salem', ...Object.keys(STUDENTS).filter((k) => team.some((t) => t.obj === yard.friends[1 + Object.keys(STUDENTS).indexOf(k)])), 'mongia'];
@@ -3333,6 +3337,29 @@ async function newGame() {
   G.lock = 0;
   await playIntro();
 }
+// المعلم يدخل أي غرفة مباشرة ليجرّبها، دون حفظ
+async function tryRoom(hero, grade, i) {
+  G.preview = true;
+  SFX.init();
+  resetProgress();
+  setHero(hero);
+  setPlayerName('تجربة');
+  applyGrade(grade);
+  G.stage = i === 0 ? 'yard2' : 'done';
+  player.g.visible = true;
+  await fade(true);
+  startPlaying();
+  G.lock = 0;
+  yard.friends.forEach((f, k) => { if (k) f.visible = false; });
+  yard.bookLid.rotation.z = 2.6;
+  joinTeam(shtshouta, C.names.shtshouta); joinTeam(shtshout, C.names.shtshout);
+  shtshout.position.set(-2.2, 0, 5.6); shtshouta.position.set(-0.6, 0, 6.4);
+  shtshouta.userData.mark.visible = false;
+  await enterHall();
+  toast('وضع التجربة: لن يُحفظ شيء', 'good', 3000);
+  if (i === 0) await enterLibrary();
+  else await enterRoom(i);
+}
 async function continueGame(sv) {
   SFX.init();
   resetProgress();
@@ -3429,7 +3456,9 @@ $('gradeRow').innerHTML = GRADE_NAMES.map((n, i) => '<button class="grade-card" 
 document.querySelectorAll('#gradePick [data-grade]').forEach((b) => { b.onclick = () => { $('gradePick').hidden = true; applyGrade(+b.dataset.grade); const f = gradeThen; gradeThen = null; f && f(); }; });
 
 // اختيار البطل ثم الصف قبل بدء المغامرة
-$('btnNew').onclick = () => { $('heroPick').hidden = false; };
+$('btnNew').onclick = () => { G.picking = true; $('gradeBack').hidden = false; $('heroPick').hidden = false; };
+// الرجوع من شاشات البداية: لم يُحفظ شيء بعد، فتعود اللعبة المحفوظة كما كانت
+document.querySelectorAll('.pick-back').forEach((b) => { b.onclick = () => location.reload(); });
 document.querySelectorAll('#heroPick [data-hero]').forEach((b) => { b.onclick = () => { $('heroPick').hidden = true; setHero(b.dataset.hero); gradeThen = askName; $('gradePick').hidden = false; }; });
 // اسم التلميذ يظهر فوق رأس بطله بدل «أنت»
 function askName() { $('nameInput').value = G.name || ''; $('namePick').hidden = false; setTimeout(() => $('nameInput').focus(), 50); }
@@ -3444,6 +3473,7 @@ function setPlayerName(n) {
 function nameGo() {
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 14);
   if (!n) { $('nameInput').focus(); $('nameInput').classList.add('shake'); setTimeout(() => $('nameInput').classList.remove('shake'), 400); return; }
+  G.picking = false;
   $('namePick').hidden = true;
   setPlayerName(n);
   newGame();
@@ -3454,7 +3484,7 @@ $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameG
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
 $('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
 $('btnAsk').onclick = () => { askFriend(); $('btnAsk').blur(); };
-HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', gt, onTimeout: () => hurtHero(25) });
+HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), allRooms: SC.rooms.map((r, i) => ({ id: r.id, name: r.name, i })), tryRoom, editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', gt, onTimeout: () => hurtHero(25) });
 $('btnPauseHw').onclick = () => HW.openList();
 $('btnHelp').onclick = () => { $('help').hidden = false; };
 // زر «طريقة اللعب» أثناء اللعب: يوقف اللعبة حتى يُغلق
@@ -3464,8 +3494,8 @@ $('btnHelpClose').onclick = () => { $('help').hidden = true; if (helpPaused) { h
 $('btnPause').onclick = () => togglePause();
 $('btnResume').onclick = () => togglePause();
 $('btnPauseHelp').onclick = () => { $('help').hidden = false; };
-$('btnRestart').onclick = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
-$('btnReplay').onclick = () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* */ } location.reload(); };
+$('btnRestart').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
+$('btnReplay').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* */ } location.reload(); };
 $('btnMute').onclick = () => { SFX.init(); const on = SFX.toggle(); $('btnMute').textContent = on ? '🔊' : '🔇'; voice.muted = !on; };
 // زر الشاشة الكاملة: يظهر فقط حيث يسمح المتصفح بها (لا يدعمها الآيفون)
 const fsRoot = document.documentElement;

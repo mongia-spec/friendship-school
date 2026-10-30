@@ -58,7 +58,7 @@ window.GAME_CONTENT = {
       { id: 'review', name: 'غرفة المراجعة', monster: 'وحش المراجعة', color: '#1e88e5', theme: 'review', photo: 'assets/rooms/review.webp' },
       { id: 'tests', name: 'قاعة الاختبارات', monster: 'وحش الاختبارات', color: '#455a9c', theme: 'tests', photo: 'assets/rooms/tests.webp' },
       { id: 'class', name: 'صف شتشوت', color: '#ff8a3d', theme: 'class', photo: 'assets/rooms/class.webp' },
-      { id: 'mongia', name: 'غرفة الأستاذة منجية', color: '#5b8bd6', theme: 'office', note: 'أنت أقوى مما تظن', photo: 'assets/rooms/mongia.webp' },
+      { id: 'mongia', name: 'غرفة الأستاذة منجية', color: '#5b8bd6', theme: 'office', note: 'أنتم أقوى مما تظنون', photo: 'assets/rooms/mongia.webp' },
       { id: 'secret', name: 'الممر السري', color: '#4a148c', theme: 'secret', photo: 'assets/rooms/secret.webp' },
     ],
     locked: 'ينتظر في المستوى القادم... أنقذ صديقك الأول أولًا!',

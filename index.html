@@ -53,7 +53,7 @@
       <div class="dlg-text" id="dlgText"></div>
       <div class="dlg-bar">
         <button class="dlg-replay" id="dlgReplay" title="أعد الصوت">🔁</button>
-        <span class="dlg-next">اضغط للمتابعة ◀</span>
+        <span class="dlg-next" id="dlgNext">اضغط للمتابعة ◀</span>
       </div>
     </div>
   </div>
@@ -121,6 +121,7 @@
         <button class="hero-card" data-hero="girl"><span>👧</span>بنت</button>
         <button class="hero-card" data-hero="boy"><span>👦</span>ولد</button>
       </div>
+      <button class="btn ghost pick-back">رجوع</button>
     </div>
   </div>
 
@@ -130,6 +131,7 @@
       <h2>في أيّ صف أنت؟</h2>
       <p class="hint">نختار لك الأسئلة والنصوص على قدر مستواك.</p>
       <div class="grade-row" id="gradeRow"></div>
+      <button class="btn ghost pick-back" id="gradeBack" hidden>رجوع</button>
     </div>
   </div>
 
@@ -139,7 +141,7 @@
       <h2>ما اسمك؟</h2>
       <p class="hint">سيظهر اسمك فوق رأس بطلك طوال المغامرة.</p>
       <input id="nameInput" class="name-input" maxlength="14" placeholder="اكتب اسمك هنا" dir="rtl" autocomplete="off">
-      <div class="menu"><button class="btn big" id="nameGo">ابدأ المغامرة</button></div>
+      <div class="menu"><button class="btn big" id="nameGo">ابدأ المغامرة</button><button class="btn ghost pick-back">رجوع</button></div>
     </div>
   </div>
 
@@ -261,7 +263,10 @@
   <div id="hwTeacher" class="screen dim" hidden>
     <div class="panel small">
       <h2>📤 للمعلم وولي الأمر</h2>
-      <button class="btn" id="hwfEdit">✏️ لوحة تعديل أسئلة اللعبة</button>
+      <div class="hw-row">
+        <button class="btn" id="hwfEdit">✏️ لوحة تعديل أسئلة اللعبة</button>
+        <button class="btn" id="hwfTry">🚪 جرّب أي غرفة مباشرة</button>
+      </div>
       <p class="hint">اكتب واجبًا، أو غيّر كلمات غرفة الإملاء، فتحصل على رابط ترسله إلى طلابك. يظهر ما كتبته لكل طالب يفتح الرابط.</p>
       <input id="hwfTeacher" class="hw-input" maxlength="60" placeholder="اسم المعلم" autocomplete="off">
       <input id="hwfEmail" class="hw-input" dir="ltr" maxlength="120" placeholder="بريدك لتسلّم الحلول (اختياري)" autocomplete="off">
@@ -300,6 +305,23 @@
   </div>
 
   <!-- ملكية ثابتة لا تدخل في لوحة المعلم -->
+  <!-- تجربة أي غرفة مباشرة (لا تغيّر تقدّم اللعب المحفوظ) -->
+  <div id="hwTry" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>🚪 جرّب أي غرفة مباشرة</h2>
+      <p class="hint">للمعلم وولي الأمر: تدخل الغرفة فورًا دون المرور بما قبلها. لا تُحفظ هذه التجربة، ولا تغيّر اللعب المحفوظ على هذا الجهاز.</p>
+      <div class="hw-settings">
+        <label class="hw-label">الصف<select id="hwtGrade" class="hw-input"></select></label>
+        <label class="hw-label">البطل<select id="hwtHero" class="hw-input"><option value="girl">بنت</option><option value="boy">ولد</option></select></label>
+      </div>
+      <label class="hw-label">الغرفة<select id="hwtRoom" class="hw-input"></select></label>
+      <div class="hw-row hw-gap">
+        <button class="btn" id="hwtGo">ادخل الغرفة</button>
+        <button class="btn ghost" id="hwtClose">رجوع</button>
+      </div>
+    </div>
+  </div>
+
   <!-- لوحة تعديل الأسئلة -->
   <div id="hwEdit" class="screen dim" hidden>
     <div class="panel">
