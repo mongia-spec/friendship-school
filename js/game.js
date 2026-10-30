@@ -1182,7 +1182,7 @@ function buildRoom(i) {
     for (let k = -2; k <= 2; k++) { const kx = c.x + k * 3; box(1.6, 2.2, 0.8, 0x6b3e1f, kx, 1.1, c.z - 9.5); label('🔑', 0.6, { bg: null, size: 80, pad: 4 }).position.set(kx, 2.7, c.z - 9.4); }
     addCol(c.x - 7, c.x + 7, c.z - 10, c.z - 9);
   } else if (T === 'office') {
-    desk(c.x, c.z - 6, 3);
+    if (!room.photo) desk(c.x, c.z - 6, 3);
     sphere(0.8, 0x4f9a45, c.x + 7, 1.6, c.z - 8, scene, 10); cyl(0.5, 0.4, 0.9, 0xfaf3e6, c.x + 7, 0.45, c.z - 8, scene, 12);
     r.note = signPlane(room.note, 6, { size: 80, color: '#1d2a5c', bg: '#fbf6ea', border: '#5b8bd6', maxW: 1000 });
     r.note.position.set(c.x, 2.6, c.z - 10.9);
@@ -1252,6 +1252,19 @@ function roomPhotoLook(r, c, room) {
   const W = 22, H = W * (room.photoH || 941) / (room.photoW || 1672);
   const back = mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: texLoader.load(room.photo), fog: false }), c.x, H / 2, c.z - 10.97);
   back.renderOrder = -1;
+  if (room.theme === 'office' && r.mongia) {
+    // الأستاذة منجية جالسة خلف المكتب: شخصيتها أمام الصورة، وفوقها قطعة المكتب من الصورة نفسها فتخفي نصفها السفلي
+    const px = W / (room.photoW || 1672), PW = room.photoW || 1672, PH = room.photoH || 941;
+    const X0 = 545, X1 = 1125, Y0 = 472, Y1 = 668;
+    const m = r.mongia;
+    const big = 3.6 / 1.7;   // بحجم الكرسي في الصورة
+    m.scale.set(big, big, 0.12); m.userData.seated = true; m.userData.speakerH = 3.6; m.rotation.y = 0;
+    m.position.set(c.x + (842 - PW / 2) * px, (PH - 352) * px - 3.6, c.z - 10.84);
+    const g = new THREE.PlaneGeometry((X1 - X0) * px, (Y1 - Y0) * px), uv = g.attributes.uv;
+    uv.setXY(0, X0 / PW, 1 - Y0 / PH); uv.setXY(1, X1 / PW, 1 - Y0 / PH); uv.setXY(2, X0 / PW, 1 - Y1 / PH); uv.setXY(3, X1 / PW, 1 - Y1 / PH);
+    mesh(g, new THREE.MeshBasicMaterial({ map: back.material.map, fog: false }), c.x + ((X0 + X1) / 2 - PW / 2) * px, (PH - (Y0 + Y1) / 2) * px, c.z - 10.72);
+    r.talkAt = new V3(c.x, 0, c.z - 9);
+  }
   (r.boardObjs || []).forEach((o) => { o.visible = false; });     // السبورة في الصورة نفسها
   if (r.title) r.title.position.y = H - 0.9;                       // اسم الغرفة فوق الصورة
   if (r.note) r.note.position.y = H - 2.4;                         // عبارة الأستاذة تحت اسم الغرفة، لا فوق المكتب
@@ -1293,7 +1306,15 @@ function makeRoomMonster(d, pos) {
 }
 function setRoomHealth(h) {
   if (HW.pending(roomRun.r.room.id)) h = Math.max(8, h);   // لا يُهزم الوحش تمامًا قبل الواجب
-  roomRun.health = Math.max(0, h);
+  roomRun.health = Math.min(100, Math.max(0, h));
+  const rage = h > 0 && h <= 25 ? 2 : h > 0 && h <= 55 ? 1 : 0;
+  if (rage > (roomRun.rage || 0)) {             // يغضب: أسرع في المطاردة وأقصر في وقت الهجوم
+    roomRun.rage = rage;
+    const m = roomRun.r.monster;
+    m.laugh = 1; SFX.play('growl');
+    burst(m.g.position.clone().add(new V3(0, 2, 0)), 0xff5252, 30, 6);
+    toast(`😡 ${roomRun.r.data.monster.name}: ${rage === 1 ? 'لن تهزمني بسهولة!' : 'سأقاوم حتى آخر لحظة!'}`, 'bad', 2800);
+  }
   $('monsterFill').style.width = roomRun.health + '%';
   roomRun.r.monster.target = 0.55 + 0.6 * roomRun.health / 100;
 }
@@ -1324,10 +1345,60 @@ function hitMonster() {
   const rr = roomRun, m = rr.r.monster;
   gainSkill(rr.r.room.id);
   rr.done++;
-  setRoomHealth(100 - rr.done / rr.total * 100 + (rr.heal || 0));
+  friendStrike();
+  setRoomHealth(Math.max(rr.done < rr.total ? 6 : 0, 100 - rr.done / rr.total * 100 + (rr.heal || 0)));
   setEnergy(G.energy + 3);
   m.hurt = 0.6; SFX.play('hit');
   burst(m.g.position.clone().add(new V3(0, 2, 0)), new THREE.Color(m.data.color).getHex(), 26, 5);
+}
+// الزملاء المحرَّرون يشاركون: يضربون الوحش مع البطل، ويجيبون حين يُسألون، ويعترضون الوحش في المطاردة
+const freedFriends = () => team.filter((t) => t.obj !== shtshout && t.obj !== shtshouta);
+function friendStrike() {
+  const list = freedFriends(), rr = roomRun;
+  if (!list.length) return;
+  const f = list[Math.random() * list.length | 0], m = rr.r.monster;
+  rr.heal = (rr.heal || 0) - 3;
+  burst(f.obj.position.clone().add(new V3(0, 1.2, 0)), 0x7be3a6, 14, 3);
+  burst(m.g.position.clone().add(new V3(0, 2, 0)), 0xffd23f, 14, 4);
+  toast(`💥 ${f.name} يضرب الوحش معك!`, 'good', 2000);
+}
+function refreshAsk() {
+  const rr = roomRun, st = rr && rr.cur && rr.cur.st;
+  const can = !!st && (st.type === 'tiles' || st.type === 'choose') && !rr.askedNow;
+  const f = can ? freedFriends().find((t) => !(rr.asked || []).includes(t.obj)) : null;
+  $('btnAsk').hidden = !f;
+  if (f) $('btnAsk').textContent = `🙋 اسأل ${f.name} (H)`;
+  $('fightBar').hidden = !f && !(rr && rr.attackMax);
+}
+function askFriend() {
+  const rr = roomRun, st = rr && rr.cur && rr.cur.st;
+  if (!st || $('btnAsk').hidden) return;
+  const f = freedFriends().find((t) => !(rr.asked || []).includes(t.obj));
+  if (!f) return;
+  (rr.asked = rr.asked || []).push(f.obj);
+  rr.askedNow = true;
+  let wrong = '';
+  if (st.type === 'tiles') {
+    const t = shuffle(rr.r.tiles.filter((x) => x.on && x.word !== st.answer))[0];
+    if (t) { wrong = t.word; t.on = false; t.lb.visible = false; }
+  } else {
+    const b = shuffle([...$('quizOpts').querySelectorAll('button:not([disabled])')].filter((x) => x.textContent !== st.answer))[0];
+    if (b) { wrong = b.textContent; b.disabled = true; b.classList.add('no'); }
+  }
+  burst(f.obj.position.clone().add(new V3(0, 1.2, 0)), 0x7be3a6, 12, 3);
+  if (wrong) toast(`${f.name}: أنا متأكد أن «${wrong}» ليست الجواب!`, 'good', 3200);
+  refreshAsk();
+}
+function startAttack(sec) {
+  const rr = roomRun;
+  rr.attackMax = sec * (1 - 0.15 * (rr.rage || 0));
+  rr.attackLeft = rr.attackMax;
+  refreshAsk();
+}
+function stopAttack() { const rr = roomRun; if (rr) rr.attackMax = 0; $('attackFill').style.width = '0'; $('attackText').textContent = ''; refreshAsk(); }
+function attackSeconds(st) {
+  if (st.type === 'order' || st.type === 'memory') return 20 + (st.items ? st.items.length : 5) * 6;
+  return (st.listen ? 50 : 38) - G.grade;
 }
 // طاقة البطل: تنقص مع الخطأ وانتهاء وقت الواجب فيبطؤ، وتعود بالنجوم والإجابات الصحيحة وإنقاذ الغرف
 function setEnergy(v) { G.energy = Math.max(0, Math.min(100, v)); save(); }
@@ -1359,7 +1430,20 @@ function starsNearby() {
   return list.some((s) => s.obj.visible);
 }
 function warnMonster() { warnHero(starsNearby() ? 'warn-' + (Math.random() * 4 | 0) : 'warn-5'); }
-function missMonster() { if (roomRun) { roomRun.r.monster.laugh = 0.8; roomRun.wrong++; } hurtHero(); SFX.play('bad'); }
+// كل خطأين يعيد الوحش السؤال نفسه تحديًا إضافيًا (حتى ثلاث مرات)، فلا يفوز الطالب دون أن يتقنه
+function monsterResists() {
+  const rr = roomRun;
+  rr.heal = (rr.heal || 0) + 6;
+  setRoomHealth(rr.health + 6);
+  rr.misses = (rr.misses || 0) + 1;
+  if (rr.misses % 2 === 0 && (rr.extras || 0) < 3 && rr.cur && rr.queue) {
+    rr.extras = (rr.extras || 0) + 1;
+    rr.total++;
+    rr.queue.push(rr.cur);
+    tip(`🛡️ ${rr.r.data.monster.name} يقاوم! أضاف تحديًا جديدًا`);
+  }
+}
+function missMonster() { if (roomRun) { roomRun.r.monster.laugh = 0.8; roomRun.wrong++; monsterResists(); } hurtHero(); SFX.play('bad'); }
 
 // تحدي البلاطات: يقف اللاعب على البلاطة التي تحمل الجواب
 // وحش الإملاء يطارد البطل أثناء البلاطات؛ إذا أمسكه أو أخطأ عاد إلى الباب وتغيّرت أماكن الإجابات
@@ -1480,6 +1564,7 @@ async function stepMemory(st, title) {
   for (let k = st.show; k > 0; k--) { $('quizFb').style.color = '#5a33b8'; $('quizFb').textContent = '⏳ ' + k; await wait2(1000); }
   $('quiz').hidden = true;
   G.lock--;
+  startAttack(attackSeconds(st));
   await openOrder({ title: st.title || 'رتّب الكلمات كما رأيتها', hint: 'مِمْحاة مسح الكلمات! استرجعها من ذاكرتك.', items: st.items, poolH: 'الكلمات', slotsH: 'بالترتيب الذي رأيته', hint2: 'أغمض عينيك وتذكّر الصورة.' });
 }
 // المراجعة: مفاتيح مضيئة في أرجاء الغرفة، عند كل مفتاح سؤال من غرفة سابقة
@@ -1495,9 +1580,13 @@ function stepCollect(st) {
       return { g, it, done: false, busy: false };
     });
     riddleText(`اجمع مفاتيح المعرفة 🔑 ${got} من ${st.items.length}`);
+    rr.chaseOn = true; rr.chaseWait = 3.5;
     rr.onKey = async (key) => {
       key.busy = true;
+      rr.cur = { st: Object.assign({ type: 'choose' }, key.it) }; rr.askedNow = false;
+      startAttack(attackSeconds(key.it));
       await openQuiz(key.it, 'مفتاح المعرفة 🔑');
+      stopAttack();
       key.done = true; key.g.visible = false; got++;
       burst(key.g.position, 0xffd23f, 20, 4);
       hitMonster();
@@ -1545,11 +1634,21 @@ function spellingSteps() {
   const words = shuffle(pool.words.slice()).slice(0, 3).map(orderStep);
   return [tiles[0], tiles[1], words[0], tiles[2], tiles[3], words[1], tiles[4], tiles[5], words[2]];
 }
+// بنك أسئلة الغرفة حسب الصف: في كل دخول مزيج جديد من الأسئلة
+function roomSteps(id) {
+  const g = gradeData(), base = (g && g[id] && g[id].steps) || BASE_CONTENT.steps[id];
+  const pool = ((window.ROOM_POOLS || {})[id] || {})[G.grade];
+  if (!pool) return base;
+  const all = pool.concat(base);
+  const take = (type, n) => shuffle(all.filter((s) => s.type === type)).slice(0, n);
+  return shuffle([...take('tiles', 5), ...take('choose', 3), ...take('order', 2)]);
+}
 async function startRoomFight(r) {
   const d = r.data, c = roomPos(r.i);
   if (r.room.id === 'spelling') d.steps = spellingSteps();
+  else if ((window.ROOM_POOLS || {})[r.room.id]) d.steps = roomSteps(r.room.id);
   const units = d.steps.reduce((n, st) => n + (st.type === 'collect' ? st.items.length : 1), 0);
-  roomRun = { r, active: true, done: 0, total: units, health: 100, wrong: 0, onTile: null, onKey: null, keys: [], chase: r.room.id === 'spelling' };
+  roomRun = { r, active: true, done: 0, total: units, health: 100, wrong: 0, onTile: null, onKey: null, keys: [], chase: true };
   $('monsterName').textContent = d.monster.name;
   setRoomHealth(100);
   $('monsterBar').hidden = false;
@@ -1565,21 +1664,29 @@ async function startRoomFight(r) {
   G.cam = null;
   G.lock--;
   toast('🎯 ' + d.goal, 'good', 5200);
-  for (let k = 0; k < d.steps.length; k++) {
-    const st = d.steps[k];
+  const queue = d.steps.map((st, k) => ({ st, k }));
+  roomRun.queue = queue;
+  for (let q = 0; q < queue.length; q++) {
+    const { st, k } = queue[q];
+    roomRun.cur = queue[q]; roomRun.askedNow = false;
+    refreshAsk();
     if (!st.listen) warnMonster();
-    const title = `${d.monster.name} · ${RX.step.replace('{n}', roomRun.done + 1).replace('{total}', units)}`;
-    if (st.type === 'collect') { await stepCollect(st); continue; }
+    const title = `${d.monster.name} · ${RX.step.replace('{n}', roomRun.done + 1).replace('{total}', roomRun.total)}`;
+    if (st.type === 'collect') { await stepCollect(st); roomRun.chaseOn = false; monsterHome(r); continue; }
     if (st.type === 'tiles') await stepTiles(st);
     else {
       $('riddle').hidden = true;
+      startAttack(attackSeconds(st));
       if (st.type === 'order') await openOrder({ title: st.title, hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: d.hint });
       else if (st.type === 'choose') await openQuiz(st, title, listenId(r.room.id, k));
-      else if (st.type === 'memory') await stepMemory(st, title);
+      else if (st.type === 'memory') { stopAttack(); await stepMemory(st, title); }
+      stopAttack();
     }
     hitMonster();
     await wait(0.6);
   }
+  stopAttack();
+  $('fightBar').hidden = true;
   await homeworkGate(r.room.id);
   roomRun.heal = 0;
   setRoomHealth(0);
@@ -1695,13 +1802,35 @@ function updateRoom(dt) {
     if (tile && tile !== roomRun.lastTile) roomRun.onTile(tile);
     roomRun.lastTile = tile || null;
   }
-  if (roomRun.chaseOn && roomRun.onTile && G.lock === 0) {
+  if (roomRun.attackMax > 0) {
+    roomRun.attackLeft -= dt;
+    $('attackFill').style.width = Math.max(0, roomRun.attackLeft / roomRun.attackMax * 100) + '%';
+    $('attackText').textContent = `⚔️ الوحش يهاجم بعد ${Math.ceil(Math.max(0, roomRun.attackLeft))}`;
+    if (roomRun.attackLeft <= 0) {
+      roomRun.attackLeft = roomRun.attackMax;
+      const m = r.monster;
+      m.laugh = 1; SFX.play('boo');
+      roomRun.heal = (roomRun.heal || 0) + 5;
+      setRoomHealth(roomRun.health + 5);
+      hurtHero(10);
+      toast('⚔️ هاجمك الوحش واستعاد بعض قوته! أسرع في الجواب', 'bad', 2600);
+    }
+  }
+  if (roomRun.chaseOn && (roomRun.onTile || roomRun.onKey) && G.lock === 0) {
     if (roomRun.chaseWait > 0) {
       roomRun.chaseWait -= dt;
       if (roomRun.chaseWait <= 0) { r.monsterCol.on = false; SFX.play('growl'); warnMonster(); }
     } else {
       const g = r.monster.g, dx = P.pos.x - g.position.x, dz = P.pos.z - g.position.z, d = Math.hypot(dx, dz);
-      const sp = 1.5 + G.grade * 0.12;   // أسرع قليلًا في الصفوف الأعلى، وأبطأ دائمًا من مشي البطل
+      roomRun.stun = Math.max(0, (roomRun.stun || 0) - dt);
+      const sp = roomRun.stun > 0 ? 0 : (1.5 + G.grade * 0.12) * (1 + 0.25 * (roomRun.rage || 0));   // أسرع في الصفوف الأعلى وحين يغضب
+      const blocker = roomRun.stun > 0 ? null : team.find((t) => !(roomRun.blocked || []).includes(t.obj) && Math.hypot(t.obj.position.x - g.position.x, t.obj.position.z - g.position.z) < 2.6);
+      if (blocker) {
+        (roomRun.blocked = roomRun.blocked || []).push(blocker.obj);
+        roomRun.stun = 2.5;
+        burst(g.position.clone().add(new V3(0, 1.6, 0)), 0x7be3a6, 26, 5);
+        toast(`🛡️ ${blocker.name} يعترض الوحش! أسرع!`, 'good', 2400);
+      }
       if (d > 0.1) { g.position.x += dx / d * sp * dt; g.position.z += dz / d * sp * dt; }
       collide(g.position, 1.0);
       g.position.y = 0;
@@ -1718,6 +1847,7 @@ function updateRoom(dt) {
 
 async function enterHall(fromRoom = null) {
   G.lock++;
+  G.camPitch = 0.42;
   tip('');
   SFX.play('door');
   await fade(true);
@@ -1744,6 +1874,7 @@ async function enterRoom(i) {
   if (SC.rooms[i].id === 'spelling' && newWords()) G.cleared.delete('spelling');
   setupRoom(r);
   setArea('room');
+  G.camPitch = SC.rooms[i].theme === 'office' ? 0.1 : 0.42;
   placePlayer(r.exitFront.x, r.exitFront.z - 3.5, PI);
   await fade(false);
   G.lock--;
@@ -1845,6 +1976,7 @@ window.addEventListener('keydown', (e) => {
   if (!$('dialog').hidden && ['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code)) { userAdvance(); return; }
   if (e.code === 'Space') jumpQueued = true;
   if (e.code === 'KeyE' || e.code === 'Enter') useQueued = true;
+  if (e.code === 'KeyH' && roomRun) askFriend();
   if (e.code === 'Escape' && G.playing) togglePause();
 });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -1945,7 +2077,7 @@ function aimAtSpeaker(who) {
   dlg.speaker = o;
   if (!o) return;
   const room = who === 'monster' && rooms.find((r) => r && r.monster && r.monster.g === o);
-  dlg.spH = room ? room.monster.top * room.monster.scale : who === 'monster' ? 3.2 * o.scale.y : SPEAKER_H[who] || 1.4;
+  dlg.spH = o.userData.speakerH || (room ? room.monster.top * room.monster.scale : who === 'monster' ? 3.2 * o.scale.y : SPEAKER_H[who] || 1.4);
   const p = o.getWorldPosition(new V3());
   const dir = camera.position.clone().sub(p); dir.y = 0;
   if (dir.lengthSq() < 0.01) dir.set(0, 0, 1);
@@ -1956,7 +2088,7 @@ function speakerCam() {
   const p = o.getWorldPosition(new V3());
   const head = p.clone().add(new V3(0, h * 0.82, 0));
   const pos = head.clone().addScaledVector(dlg.spDir, h * 1.15 + 0.6).add(new V3(0, h * 0.1, 0));
-  if (o.userData.glb) o.rotation.y = angleLerp(o.rotation.y, Math.atan2(dlg.spDir.x, dlg.spDir.z), 0.15);   // تلتفت إلى الكاميرا وهي تتكلم
+  if (o.userData.glb && !o.userData.seated) o.rotation.y = angleLerp(o.rotation.y, Math.atan2(dlg.spDir.x, dlg.spDir.z), 0.15);   // تلتفت إلى الكاميرا وهي تتكلم
   return { pos, look: head, speed: 4 };
 }
 // الحوار مسموع: الصوت بدل الكتابة، ويتقدّم وحده حين ينتهي الصوت
@@ -2552,7 +2684,7 @@ const interactables = [
   { at: () => hall.backFront, r: 2.6, label: 'اخرج إلى الساحة', on: () => G.area === 'hall', act: exitToYard },
   { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'ارجع إلى الممر', on: () => G.area === 'room' && !(roomRun && roomRun.active), act: () => enterHall(G.room) },
   { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'الباب مقفل حتى تهزم الوحش', on: () => G.area === 'room' && !!(roomRun && roomRun.active), act: async () => toast('لا تقلق! الخطأ لا يعاقبك. أكمل التحدي لتهزم الوحش.', 'bad', 2600) },
-  { at: () => rooms[11] && rooms[11].mongia.position, r: 2.6, label: 'تحدّث إلى ماما منجية', on: () => G.area === 'room' && G.room === 11, act: () => say(G.cleared.has('tests') ? RX.mongiaAfter : RX.mongiaBefore) },
+  { at: () => rooms[11] && (rooms[11].talkAt || rooms[11].mongia.position), r: 3.4, label: 'تحدّث إلى ماما منجية', on: () => G.area === 'room' && G.room === 11, act: () => say(G.cleared.has('tests') ? RX.mongiaAfter : RX.mongiaBefore) },
   { at: () => yard.doors[0].pos, r: 4.2, label: 'تحدّث إلى شتشوتة أولًا', on: () => G.stage === 'yard' && G.area === 'yard', act: async () => toast('شتشوتة تريد أن تخبرك شيئًا أولًا', 'bad') },
   { at: () => lib.lectern.position, r: 2.4, label: 'رتّب صفحات القصة', on: () => G.stage === 'libA' && G.pages >= 5 && G.area === 'library', act: solveStory },
   { at: () => lib.lectern.position, r: 2.4, label: 'منصة القراءة: اجمع الصفحات أولًا', on: () => G.stage === 'libA' && G.pages < 5 && G.area === 'library', act: async () => toast(`ما زالت ${5 - G.pages} صفحات مبعثرة`, 'bad') },
@@ -2850,6 +2982,7 @@ function updateWorld(dt) {
   // الصور المسطحة تواجه الكاميرا؛ الشخصيات المتحركة الواقفة تلتفت بهدوء نحو اللاعب
   const inTeam = (o) => team.some((t) => t.obj === o);
   for (const o of [shtshout, shtshouta, ...yard.friends, ...(window.extraChars || [])]) {
+    if (o.userData.seated) continue;
     if (o.userData.glb) {
       if (!inTeam(o) && o !== dlg.speaker) o.rotation.y = angleLerp(o.rotation.y, Math.atan2(P.pos.x - o.position.x, P.pos.z - o.position.z), 1 - Math.exp(-dt * 3));
     } else o.rotation.y = Math.atan2(camera.position.x - o.position.x, camera.position.z - o.position.z);
@@ -3086,6 +3219,7 @@ $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameG
 // تغيير الصف أثناء اللعب (من قائمة الاستراحة): الغرف التي لم تُهزم بعد تأخذ أسئلة الصف الجديد
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
 $('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
+$('btnAsk').onclick = () => { askFriend(); $('btnAsk').blur(); };
 HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), name: () => G.name || '', onTimeout: () => hurtHero(25) });
 $('btnPauseHw').onclick = () => HW.openList();
 $('btnHelp').onclick = () => { $('help').hidden = false; };

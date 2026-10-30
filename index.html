@@ -32,6 +32,7 @@
       <div><kbd>Shift</kbd> الجري</div>
       <div><kbd>مسافة</kbd> القفز</div>
       <div><kbd>E</kbd> التفاعل</div>
+      <div><kbd>H</kbd> اسأل زميلك</div>
       <div><kbd>اسحب الفأرة</kbd> الكاميرا</div>
     </div>
     <div id="tip"></div>
@@ -169,6 +170,7 @@
         <li><kbd>Shift</kbd>: الجري</li>
         <li><kbd>مسافة</kbd>: القفز</li>
         <li><kbd>E</kbd> أو <kbd>Enter</kbd>: التفاعل والحوار</li>
+        <li><kbd>H</kbd>: اسأل زميلًا حرّرته ليساعدك في السؤال</li>
         <li>اسحب بالفأرة أو بالإصبع لتدوير الكاميرا، أو <kbd>Q</kbd> و<kbd>R</kbd></li>
         <li>على الهاتف: عصا التحكم يسارًا والأزرار يمينًا</li>
       </ul>
@@ -207,6 +209,13 @@
 
   <!-- ملكية اللعبة: تظهر في كل الشاشات -->
   <button class="icon-btn" id="btnFull" title="شاشة كاملة" aria-label="شاشة كاملة" hidden>⛶</button>
+  <!-- تحدي الوحش: عدّ الهجوم وسؤال الزميل -->
+  <div id="fightBar" hidden>
+    <span id="attackText"></span>
+    <div class="bar"><i id="attackFill"></i></div>
+    <button class="btn ghost" id="btnAsk" hidden></button>
+  </div>
+
   <!-- واجباتي (الطالب) -->
   <div id="hwList" class="screen dim" hidden>
     <div class="panel small">
@@ -315,6 +324,8 @@
 <script src="js/hall-look.js"></script>
 <script src="js/yard-look.js"></script>
 <script src="content/spelling-pools.js"></script>
+<script src="content/grammar-pools.js"></script>
+<script src="content/vocab-pools.js"></script>
 <script src="js/homework.js"></script>
 <script src="js/game.js"></script>
 </body>

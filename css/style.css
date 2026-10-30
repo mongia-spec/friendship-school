@@ -218,3 +218,11 @@ body.touch #owner { bottom: auto; top: 4px; }
 #keysHint kbd { background: #fff; color: #2a1f4d; border-radius: 6px; padding: 0 6px; font-family: inherit; font-size: 12px; font-weight: 800; }
 body.touch #keysHint { display: none; }
 @media (max-width: 600px) { #owner { font-size: 8.5px; padding: 1px 8px; } body.touch .hud-top { top: 20px; } }
+/* تحدي الوحش */
+#fightBar { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 28; display: flex; align-items: center; gap: 10px; background: rgba(42,31,77,.88); color: #fff; padding: 6px 14px; border-radius: 16px; font-weight: 800; font-size: 15px; white-space: nowrap; }
+#fightBar[hidden] { display: none; }
+#fightBar .bar { width: 130px; height: 10px; background: rgba(255,255,255,.25); border-radius: 6px; overflow: hidden; }
+#fightBar .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ff5252, #ffb300); }
+#fightBar .btn { font-size: 14px; padding: 6px 12px; }
+#attackText:empty, #attackText:empty + .bar { display: none; }
+@media (max-width: 600px) { #fightBar { top: 40px; font-size: 13px; } #fightBar .bar { width: 60px; } }
