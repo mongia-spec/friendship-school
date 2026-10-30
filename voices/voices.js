@@ -131,5 +131,11 @@ window.VOICES = {
  "g9-listen-listening-1": "voices/g9-listen-listening-1.mp3",
  "g9-listen-listening-2": "voices/g9-listen-listening-2.mp3",
  "g9-listen-listening-3": "voices/g9-listen-listening-3.mp3",
- "g9-listen-tests-3": "voices/g9-listen-tests-3.mp3"
+ "g9-listen-tests-3": "voices/g9-listen-tests-3.mp3",
+ "warn-0": "voices/warn-0.mp3",
+ "warn-1": "voices/warn-1.mp3",
+ "warn-2": "voices/warn-2.mp3",
+ "warn-3": "voices/warn-3.mp3",
+ "warn-4": "voices/warn-4.mp3",
+ "warn-5": "voices/warn-5.mp3"
 };

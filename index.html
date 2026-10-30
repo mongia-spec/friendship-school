@@ -17,6 +17,7 @@
     <div class="hud-top">
       <button class="pill" id="hudStars" title="مهاراتي">🎓 <b>0</b></button>
       <div class="pill" id="hudPower" title="مستوى البطل: يرتفع كلما قويت مهاراتك">⚡ <b>0</b></div>
+      <div class="pill" id="hudEnergy" title="طاقة البطل: تنقص مع الخطأ وتعود بالنجوم">❤️ <b>100</b></div>
       <div class="pill" id="hudPages" hidden>📄 <b>0</b>/5</div>
       <div class="pill team" id="hudTeam"></div>
       <button class="icon-btn" id="btnMute" title="الصوت">🔊</button>
@@ -25,6 +26,13 @@
     <div id="monsterBar" hidden>
       <span id="monsterName">قِرطاس</span>
       <div class="bar"><i id="monsterFill"></i></div>
+    </div>
+    <div id="keysHint" aria-label="أزرار اللعب">
+      <div><kbd>↑ ↓ ← →</kbd> المشي</div>
+      <div><kbd>Shift</kbd> الجري</div>
+      <div><kbd>مسافة</kbd> القفز</div>
+      <div><kbd>E</kbd> التفاعل</div>
+      <div><kbd>اسحب الفأرة</kbd> الكاميرا</div>
     </div>
     <div id="tip"></div>
     <div id="toast"></div>
@@ -100,7 +108,11 @@
       <div class="menu">
         <button class="btn big" id="btnNew">ابدأ المغامرة</button>
         <button class="btn" id="btnContinue" hidden>متابعة من آخر نقطة</button>
-        <button class="btn ghost" id="btnHelp">طريقة اللعب</button>
+        <div class="hw-row">
+          <button class="btn ghost" id="btnHelp">طريقة اللعب</button>
+          <button class="btn ghost" id="btnHomework">📥 واجباتي</button>
+          <button class="btn ghost" id="btnTeacher">📤 رفع واجب (للمعلم)</button>
+        </div>
       </div>
       <p class="credit">فكرة وتصميم تربوي: الأستاذة منجية عادل</p>
     </div>
@@ -171,6 +183,7 @@
       <div class="menu">
         <button class="btn" id="btnResume">متابعة اللعب</button>
         <button class="btn ghost" id="btnGrade">📚 تغيير الصف</button>
+        <button class="btn ghost" id="btnPauseHw">📥 واجباتي</button>
         <button class="btn ghost" id="btnPauseHelp">طريقة اللعب</button>
         <button class="btn ghost" id="btnRestart">إعادة المستوى من البداية</button>
       </div>
@@ -194,6 +207,88 @@
 
   <!-- ملكية اللعبة: تظهر في كل الشاشات -->
   <button class="icon-btn" id="btnFull" title="شاشة كاملة" aria-label="شاشة كاملة" hidden>⛶</button>
+  <!-- واجباتي (الطالب) -->
+  <div id="hwList" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>📥 واجباتي</h2>
+      <p class="feedback" id="hwListMsg"></p>
+      <div id="hwRows"></div>
+      <input id="hwPaste" class="hw-input" dir="ltr" placeholder="الصق هنا رابط الواجب من معلمك" autocomplete="off">
+      <div class="row">
+        <button class="btn" id="hwPasteGo">أضف الواجب</button>
+        <button class="btn ghost" id="hwListClose">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الواجب نفسه -->
+  <div id="hwView" class="screen dim" hidden>
+    <div class="panel">
+      <h2 id="hwTitle"></h2>
+      <p class="hint" id="hwMeta"></p>
+      <p class="hw-note" id="hwGateNote" hidden>⚔️ الوحش ضعف جدًا! حلّ واجبك الآن لتوجّه له الضربة الأخيرة وتحرر زميلك.</p>
+      <p class="hw-timer" id="hwTimer" hidden></p>
+      <div class="hw-work">
+        <div>
+          <h3>ورقة العمل</h3>
+          <div class="hw-text" id="hwText"></div>
+          <iframe id="hwFrame" class="hw-frame" title="ورقة العمل" hidden></iframe>
+          <button class="btn ghost" id="hwGet"></button>
+        </div>
+        <div>
+          <h3>إجاباتي</h3>
+          <div id="hwNums"></div>
+          <button class="btn" id="hwFinish"></button>
+          <button class="btn ghost" id="hwPaper" hidden>📝 سأسلّمه ورقيًا</button>
+        </div>
+      </div>
+      <div class="hw-row">
+        <button class="btn ghost" id="hwSend">📧 أرسل إجاباتي إلى المعلم</button>
+        <button class="btn ghost" id="hwSaveAns">💾 نزّل إجاباتي</button>
+      </div>
+      <p class="hint" id="hwNoEmail" hidden>لم يضع المعلم بريدًا في الواجب. سلّمه له بالطريقة التي يطلبها.</p>
+      <p class="feedback" id="hwState"></p>
+      <button class="btn" id="hwDone"></button>
+    </div>
+  </div>
+
+  <!-- رفع الواجب (المعلم) -->
+  <div id="hwTeacher" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>📤 رفع واجب</h2>
+      <p class="hint">اكتب الواجب واختر غرفته، فتحصل على رابط ترسله إلى طلابك. يظهر الواجب لكل طالب يفتح الرابط.</p>
+      <input id="hwfTeacher" class="hw-input" maxlength="60" placeholder="اسم المعلم" autocomplete="off">
+      <input id="hwfEmail" class="hw-input" dir="ltr" maxlength="120" placeholder="بريدك لتسلّم الحلول (اختياري)" autocomplete="off">
+      <p class="hint hw-small">بريدك يكون داخل الرابط، فيراه كل من يصله الرابط.</p>
+      <label class="hw-label" for="hwfRoom">غرفة الواجب</label>
+      <select id="hwfRoom" class="hw-input"></select>
+      <input id="hwfTitle" class="hw-input" maxlength="80" placeholder="عنوان الواجب، مثل: إعراب الفاعل">
+      <textarea id="hwfText" class="hw-input" rows="5" dir="rtl" placeholder="اكتب الأسئلة هنا"></textarea>
+      <input id="hwfUrl" class="hw-input" dir="ltr" placeholder="أو رابط ملف الواجب، مثل Google Drive (اختياري)" autocomplete="off">
+      <p class="hint hw-small">لرفع ملف PDF أو صورة: ضعه في Google Drive، واجعل مشاركته «أي شخص لديه الرابط»، ثم الصق رابطه هنا.</p>
+      <div class="hw-settings">
+        <label class="hw-label">عدد الأسئلة<input id="hwfCount" class="hw-input" type="number" min="1" max="40" placeholder="تلقائي"></label>
+        <label class="hw-label">وقت الحل بالدقائق<input id="hwfMins" class="hw-input" type="number" min="1" max="180" value="15"></label>
+      </div>
+      <label class="hw-check"><input type="checkbox" id="hwfPaper"> أسمح بالتسليم الورقي بدل الحل داخل اللعبة</label>
+      <p class="hint hw-small">اللعبة تضمن أن يملأ الطالب كل الخانات في وقته، أما تصحيح الإجابات فعندك.</p>
+      <div id="hwDraft"></div>
+      <div class="hw-row">
+        <button class="btn ghost" id="hwfAdd">➕ واجب آخر</button>
+        <button class="btn" id="hwfMake">🔗 أنشئ رابط الواجب</button>
+        <button class="btn ghost" id="hwfClose">إغلاق</button>
+      </div>
+      <p class="feedback" id="hwfMsg"></p>
+      <div id="hwfOut" hidden>
+        <input id="hwfLink" class="hw-input" dir="ltr" readonly>
+        <div class="hw-row">
+          <button class="btn ghost" id="hwfCopy">📋 انسخ الرابط</button>
+          <a class="btn ghost" id="hwfWhats" target="_blank" rel="noopener">واتساب</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="owner">© 2026 لعبة «مدرسة الصداقة» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة</div>
   <div id="fade"></div>
   <div id="loading" class="screen"><div class="spinner"></div><p>جارٍ تجهيز المدرسة...</p></div>
@@ -214,6 +309,7 @@
 <script src="assets/rooms/hall.js"></script>
 <script src="js/hall-look.js"></script>
 <script src="js/yard-look.js"></script>
+<script src="js/homework.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

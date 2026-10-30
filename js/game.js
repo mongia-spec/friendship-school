@@ -21,13 +21,13 @@ if (isTouch) document.body.classList.add('touch');
 const G = {
   stage: 'intro', hero: 'boy', area: 'yard', lock: 1, paused: false, playing: false, busy: false,
   cam: null, camYaw: 0, camDist: 6.5, camPitch: 0.42,
-  stars: new Set(), skills: {}, cleared: new Set(), pages: 0, health: 100, round: 0, spellIdx: 0, wrongTiles: 0, time: 0,
+  energy: 100, stars: new Set(), skills: {}, cleared: new Set(), pages: 0, health: 100, round: 0, spellIdx: 0, wrongTiles: 0, time: 0,
 };
 function loadSave() {
   try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; }
 }
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
 }
 
 /* ---------------- المحرك ---------------- */
@@ -1292,6 +1292,7 @@ function makeRoomMonster(d, pos) {
   return { g, inner, eyes: c.eyes, mouth: c.mouth, arms: c.arms, tail: c.tail, orbit, name, top: c.top, scale: 1, target: 1, hurt: 0, laugh: 0, happy: false, data: d };
 }
 function setRoomHealth(h) {
+  if (HW.pending(roomRun.r.room.id)) h = Math.max(8, h);   // لا يُهزم الوحش تمامًا قبل الواجب
   roomRun.health = Math.max(0, h);
   $('monsterFill').style.width = roomRun.health + '%';
   roomRun.r.monster.target = 0.55 + 0.6 * roomRun.health / 100;
@@ -1323,11 +1324,42 @@ function hitMonster() {
   const rr = roomRun, m = rr.r.monster;
   gainSkill(rr.r.room.id);
   rr.done++;
-  setRoomHealth(100 - rr.done / rr.total * 100);
+  setRoomHealth(100 - rr.done / rr.total * 100 + (rr.heal || 0));
+  setEnergy(G.energy + 3);
   m.hurt = 0.6; SFX.play('hit');
   burst(m.g.position.clone().add(new V3(0, 2, 0)), new THREE.Color(m.data.color).getHex(), 26, 5);
 }
-function missMonster() { if (roomRun) { roomRun.r.monster.laugh = 0.8; roomRun.wrong++; } SFX.play('bad'); }
+// طاقة البطل: تنقص مع الخطأ وانتهاء وقت الواجب فيبطؤ، وتعود بالنجوم والإجابات الصحيحة وإنقاذ الغرف
+function setEnergy(v) { G.energy = Math.max(0, Math.min(100, v)); save(); }
+function hurtHero(n = 10) {
+  setEnergy(G.energy - n);
+  burst(P.pos.clone().setY(1.2), 0xff6b6b, 10, 3);
+  if (G.energy <= 0) {
+    // البطل منهك: يستعيد الوحش بعض قوته، ويعود للبطل نصف طاقته ليكمل (بلا خسارة نهائية)
+    setEnergy(50);
+    if (roomRun) { roomRun.heal = (roomRun.heal || 0) + 15; setRoomHealth(roomRun.health + 15); }
+    toast('بطلك منهك! استعاد الوحش بعض قوته. خذ نفسًا وركّز 💪', 'bad', 3200);
+  }
+  warnHero(G.energy < 40 ? 'warn-4' : 'warn-5');
+}
+// تحذيرات شتشوت وشتشوتة بالصوت أثناء اللعب، دون إيقاف اللعب
+const warnVoice = new Audio();
+let warnAt = 0;
+function warnHero(id) {
+  const src = VOICES[id], now = performance.now();
+  if (!src || now - warnAt < 8000 || !$('dialog').hidden || G.paused) return;
+  if (!$('quiz').hidden && !$('quizListen').hidden) return;     // لا نغطي على مقطع الاستماع
+  warnAt = now;
+  warnVoice.muted = voice.muted;
+  warnVoice.src = src;
+  warnVoice.play().catch(() => {});
+}
+function starsNearby() {
+  const list = G.area === 'library' ? lib.stars : G.area === 'room' ? extraStars.filter((s) => s.id && s.id.startsWith('r' + G.room)) : [];
+  return list.some((s) => s.obj.visible);
+}
+function warnMonster() { warnHero(starsNearby() ? 'warn-' + (Math.random() * 4 | 0) : 'warn-5'); }
+function missMonster() { if (roomRun) { roomRun.r.monster.laugh = 0.8; roomRun.wrong++; } hurtHero(); SFX.play('bad'); }
 
 // تحدي البلاطات: يقف اللاعب على البلاطة التي تحمل الجواب
 function stepTiles(st) {
@@ -1440,6 +1472,14 @@ function stepCollect(st) {
   });
 }
 
+// واجب المعلم: ينزّله الطالب أو يسلّمه قبل الضربة الأخيرة
+async function homeworkGate(id) {
+  if (!HW.pending(id)) return;
+  $('riddle').hidden = true;
+  G.lock++;
+  await HW.gate(id);
+  G.lock--;
+}
 async function startRoomFight(r) {
   const d = r.data, c = roomPos(r.i);
   const units = d.steps.reduce((n, st) => n + (st.type === 'collect' ? st.items.length : 1), 0);
@@ -1461,6 +1501,7 @@ async function startRoomFight(r) {
   toast('🎯 ' + d.goal, 'good', 5200);
   for (let k = 0; k < d.steps.length; k++) {
     const st = d.steps[k];
+    if (!st.listen) warnMonster();
     const title = `${d.monster.name} · ${RX.step.replace('{n}', roomRun.done + 1).replace('{total}', units)}`;
     if (st.type === 'collect') { await stepCollect(st); continue; }
     if (st.type === 'tiles') await stepTiles(st);
@@ -1473,6 +1514,9 @@ async function startRoomFight(r) {
     hitMonster();
     await wait(0.6);
   }
+  await homeworkGate(r.room.id);
+  roomRun.heal = 0;
+  setRoomHealth(0);
   await winRoom(r);
 }
 async function winRoom(r) {
@@ -1507,12 +1551,13 @@ async function winRoom(r) {
     await say(lines);
   }
   G.cleared.add(r.room.id);
+  setEnergy(G.energy + 30);
   gainSkill(r.room.id, 3, RX.skillWin);
   G.cam = null;
   G.lock--;
   roomRun = null;
   refreshTip();
-  if (d.final) { await wait(0.8); showEnd(RX.finalCard); }
+  if (allCleared()) { await wait(0.8); showEnd(RX.finalCard); }
 }
 // حال الغرفة عند الدخول: الوحش مستيقظ، أو صديق صغير إن هُزم، والمحتجز في قفصه
 function setupRoom(r) {
@@ -1535,17 +1580,17 @@ function roomState(i) {
   if (i === 0) return G.stage === 'done' ? 'done' : 'open';
   if (RC[room.id]) {
     if (G.cleared.has(room.id)) return 'done';
-    const k = RX.order.indexOf(room.id);
-    const prevOk = k === 0 ? G.stage === 'done' : G.cleared.has(RX.order[k - 1]);
-    return prevOk || ALL_OPEN ? 'open' : 'locked';
+    return 'open';   // يبدأ اللاعب بأي باب
   }
-  if (room.theme === 'secret') return G.cleared.has('tests') || ALL_OPEN ? 'open' : 'locked';
+  if (room.theme === 'secret') return allCleared() || ALL_OPEN ? 'open' : 'locked';
   return 'open';
 }
+// هل هُزمت كل الوحوش؟ (المكتبة وغرف المهارات)
+function allCleared() { return G.stage === 'done' && RX.order.every((id) => G.cleared.has(id)); }
 function nextRoomName() {
-  if (G.stage !== 'done') return SC.rooms[0].name;
+  if (allCleared()) return null;
   const id = RX.order.find((x) => !G.cleared.has(x));
-  return id ? SC.rooms.find((x) => x.id === id).name : null;
+  return id ? SC.rooms.find((x) => x.id === id).name : SC.rooms[0].name;
 }
 function refreshHallDoors() {
   hall.doors.forEach((d) => {
@@ -1625,7 +1670,7 @@ async function enterRoom(i) {
   // في الصف يجلس الأصدقاء في مقاعدهم بدل أن يتبعوا اللاعب
   team.forEach((t) => { if (t.obj !== shtshout && t.obj !== shtshouta) t.obj.visible = T !== 'class'; });
   if (r.data && !G.cleared.has(SC.rooms[i].id)) await startRoomFight(r);
-  else if (r.data) toast(RX.roomDone, 'good', 2600);
+  else if (r.data) { toast(RX.roomDone, 'good', 2600); await homeworkGate(SC.rooms[i].id); }
   else if (T === 'class' && !r.seen) { r.seen = true; await say(RX.class); }
   else if (T === 'secret' && !r.seen) {
     r.seen = true;
@@ -1711,7 +1756,7 @@ const joy = { x: 0, y: 0, active: false };
 let jumpQueued = false, useQueued = false, touchRun = false;
 const MOVE = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
 window.addEventListener('keydown', (e) => {
-  if (e.target && e.target.tagName === 'INPUT') return;   // التلميذ يكتب اسمه
+  if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;   // التلميذ أو المعلم يكتب
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   keys[e.code] = true;
@@ -1903,10 +1948,12 @@ for (const k in STUDENTS) SPEAKER[k] = { color: '#2bb673', img: k };
 let toastT = null;
 function toast(text, kind = 'good', ms = 1800) {
   const t = $('toast');
-  t.textContent = text; t.className = 'on ' + kind;
+  t.textContent = withKeys(text); t.className = 'on ' + kind;
   clearTimeout(toastT); toastT = setTimeout(() => { t.className = ''; }, ms);
 }
-function tip(text) { $('tip').textContent = text || ''; }
+// التعليمات تذكر الزر المطلوب: على الحاسوب المفتاح، وعلى الهاتف زر الشاشة
+const withKeys = (text) => { const t = String(text || '').replace(/اقفز/, isTouch ? 'اقفز (اضغط زر «قفز»)' : 'اقفز (اضغط مفتاح المسافة)'); return isTouch ? t.replace(/اضغط E/, 'اضغط زر «تفاعل»').replace(/بالأسهم أو WASD/, 'بعصا التحكم') : t; };
+function tip(text) { $('tip').textContent = withKeys(text); }
 function setHealth(h) {
   G.health = Math.max(0, h);
   $('monsterFill').style.width = G.health + '%';
@@ -1916,6 +1963,8 @@ function setHealth(h) {
 function updateHud() {
   $('hudStars').querySelector('b').textContent = skillPoints();
   $('hudPower').querySelector('b').textContent = powerLevel();
+  $('hudEnergy').querySelector('b').textContent = Math.round(G.energy);
+  $('hudEnergy').classList.toggle('low', G.energy < 40);
   $('hudPages').querySelector('b').textContent = G.pages;
 }
 
@@ -1971,7 +2020,7 @@ function openOrder(o = {}) {
         setTimeout(() => { panel.hidden = true; G.lock--; resolve(tries); }, 1300);
         return;
       }
-      SFX.play('bad');
+      hurtHero(); SFX.play('bad');
       slots.querySelectorAll('li').forEach((li, k) => { if (!locked[k]) li.querySelector('.page-card')?.classList.add('no'); });
       fb.style.color = '#ff6b6b';
       fb.textContent = tries > 1
@@ -2211,7 +2260,7 @@ async function stepTile(t) {
     G.busy = false;
   } else {
     G.wrongTiles++;
-    SFX.play('bad');
+    hurtHero(); SFX.play('bad');
     t.mesh.material = mat(0xffb3b3);
     const base = t.mesh.position.y;
     tween(0.5, (k) => { t.mesh.position.y = base - Math.sin(k * PI) * 0.25; });
@@ -2273,7 +2322,7 @@ async function touchBook(b) {
     if (G.spellIdx >= C.spell.words.length) { G.busy = true; await wait(0.9); await finishSpell(); G.busy = false; }
   } else {
     b.cool = 1.5;
-    SFX.play('bad');
+    hurtHero(); SFX.play('bad');
     const known = b.idx >= 0 ? 'هذه كلمة من الجملة، لكن ليس دورها الآن. ابحث عن الكلمة التالية.' : C.spell.wrong;
     toast(`«${b.word}»: ${known}`, 'bad', 3200);
     monster.laugh = 0.8;
@@ -2301,6 +2350,7 @@ function defeatMonsterInstant() {
   $('monsterBar').hidden = true;
 }
 async function finishSpell() {
+  await homeworkGate('library');
   G.lock++;
   $('riddle').hidden = true;
   await camTo(new V3(LX - 4, 3.5, -16), monster.g.position.clone().add(new V3(0, 1, 0)), 0.8);
@@ -2328,6 +2378,7 @@ async function finishSpell() {
   toast('انضمّ سالم إلى الفريق! 🔑 مفتاح القراءة', 'good', 3000);
   openExit();
   G.stage = 'rescued';
+  setEnergy(G.energy + 30);
   gainSkill('reading', 3, RX.skillWin);
   G.cam = null;
   G.lock--;
@@ -2377,7 +2428,7 @@ async function exitLibrary() {
   escapees.forEach((e) => scene.remove(e.l));
   G.stage = 'done'; save();
   SFX.play('win');
-  showEnd();
+  showEnd(allCleared() ? RX.finalCard : C.endCard);
   G.cam = null;
   G.lock--;
   G.busy = false;
@@ -2421,7 +2472,8 @@ for (let i = 0; i < 13; i++) {
     at: () => hall.doors[i] && hall.doors[i].front, r: 2.3,
     get label() {
       const st = roomState(i), nm = SC.rooms[i].name;
-      return st === 'locked' ? `🔒 ${nm}` : st === 'done' ? `${nm} ✅` : `ادخل ${nm}`;
+      const hw = HW.pending(SC.rooms[i].id) ? ' 📝 فيها واجب' : '';
+      return st === 'locked' ? `🔒 ${nm}` : st === 'done' ? `${nm} ✅${hw}` : `ادخل ${nm}${hw}`;
     },
     on: () => G.area === 'hall',
     act: async () => {
@@ -2432,7 +2484,7 @@ for (let i = 0; i < 13; i++) {
         const prev = k === 0 ? SC.rooms[0].name : SC.rooms.find((x) => x.id === RX.order[k - 1]).name;
         toast(RX.lockedMsg.replace('{prev}', prev), 'bad', 2800); return;
       }
-      if (i === 0) { if (G.stage === 'done') toast('المكتبة هادئة الآن... قِرطاس صار كتابًا لطيفًا', 'good', 2400); else await enterLibrary(); }
+      if (i === 0) { if (G.stage === 'done') { toast('المكتبة هادئة الآن... قِرطاس صار كتابًا لطيفًا', 'good', 2400); await homeworkGate('library'); } else await enterLibrary(); }
       else await enterRoom(i);
     },
   });
@@ -2495,7 +2547,7 @@ function updatePlayer(dt) {
   const fwd = tmp.set(-Math.sin(yaw), 0, -Math.cos(yaw));
   const dir = new V3(fwd.x * iz + Math.cos(yaw) * ix, 0, fwd.z * iz - Math.sin(yaw) * ix);
   const run = keys.ShiftLeft || keys.ShiftRight || touchRun;
-  const speed = (run ? 7.2 : 4.4) * mag * (1 + powerLevel() * 0.07);
+  const speed = (run ? 7.2 : 4.4) * mag * (1 + powerLevel() * 0.07) * (0.6 + 0.4 * G.energy / 100);   // البطل الضعيف أبطأ
   if (mag > 0.1) {
     dir.normalize();
     P.pos.addScaledVector(dir, speed * dt);
@@ -2580,6 +2632,7 @@ function updateMonster(dt) {
     const dist = eye.distanceTo(me);
     P.hidden = lib.hides.some((h) => Math.hypot(h.x - P.pos.x, h.z - P.pos.z) < 1.7);
     const sees = canChase && !P.hidden && dist < 10 && !lineBlocked(eye, me);
+    if (canChase && !P.hidden && dist < 11) warnMonster();
     if (sees) { if (M.state !== 'chase') { SFX.play('growl'); M.alert = 0.8; } M.state = 'chase'; M.lost = 0; M.target.copy(P.pos); }
     else if (M.state === 'chase') { M.lost += dt; if (M.lost > 1.6 || P.hidden) { M.state = 'search'; M.searchT = 2; } }
     if (M.state === 'search') { M.searchT -= dt; if (M.searchT <= 0) M.state = 'patrol'; }
@@ -2632,6 +2685,7 @@ function updateMonster(dt) {
   if (M.state === 'search') M.inner.rotation.y = Math.sin(t * 4) * 0.6;
 }
 async function caught() {
+  hurtHero(15);
   SFX.play('boo');
   P.grace = 2.2;
   toast(C.tips.caught, 'bad', 2600);
@@ -2653,6 +2707,7 @@ function updateWorld(dt) {
     if (G.lock === 0 && s.obj.position.distanceTo(P.pos.clone().add(new V3(0, 1, 0))) < 1.3) {
       s.obj.visible = false; G.stars.add(s.id);
       SFX.play('star'); burst(s.obj.position, 0xffd23f, 16, 3);
+      setEnergy(G.energy + 15);
       P.cheer = 0.7;
       gainSkill(s.obj.userData.skill);
     }
@@ -2814,7 +2869,7 @@ function startPlaying() {
   $('touch').hidden = !isTouch;
 }
 function resetProgress() {
-  G.stars.clear(); G.cleared.clear(); G.skills = {}; renderSkills();
+  G.stars.clear(); G.cleared.clear(); G.skills = {}; G.energy = 100; renderSkills();
   team.length = 0; renderTeam();
   allStars().forEach((s) => { s.obj.visible = true; });
 }
@@ -2834,6 +2889,7 @@ async function continueGame(sv) {
   resetProgress();
   sv.stars.forEach((s) => G.stars.add(s)); applyStars();
   G.skills = sv.skills || {}; renderSkills();
+  G.energy = sv.energy === undefined ? 100 : sv.energy;
   G.cleared = new Set(sv.cleared || []);
   setHero(sv.hero || 'boy');
   setPlayerName(sv.name || '');
@@ -2937,6 +2993,8 @@ $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameG
 // تغيير الصف أثناء اللعب (من قائمة الاستراحة): الغرف التي لم تُهزم بعد تأخذ أسئلة الصف الجديد
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
 $('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
+HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), name: () => G.name || '', onTimeout: () => hurtHero(25) });
+$('btnPauseHw').onclick = () => HW.openList();
 $('btnHelp').onclick = () => { $('help').hidden = false; };
 $('btnHelpClose').onclick = () => { $('help').hidden = true; };
 $('btnPause').onclick = () => togglePause();
