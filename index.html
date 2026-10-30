@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>مدرسة الصداقة – سرّ الوحوش الستة</title>
+<title>مدرسة الأصدقاء – سرّ الكتاب المخفي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -103,8 +103,8 @@
   <div id="title" class="screen">
     <div class="title-card">
       <div class="badge">مغامرة تعليمية</div>
-      <h1>مدرسة الصداقة</h1>
-      <h2>سرّ الوحوش الستة</h2>
+      <h1>مدرسة الأصدقاء</h1>
+      <h2>سرّ الكتاب المخفي</h2>
       <div class="cast" id="titleCast"></div>
       <div class="menu">
         <button class="btn big" id="btnNew">ابدأ المغامرة</button>
@@ -223,6 +223,8 @@
       <p class="feedback" id="hwListMsg"></p>
       <div id="hwRows"></div>
       <div class="hw-draft-row" id="hwWordsRow" hidden><span id="hwWordsInfo"></span><button id="hwWordsClear" title="إعادة أسئلة اللعبة">✕</button></div>
+      <div class="hw-draft-row" id="hwCustomRow" hidden><span>أسئلة المعلم مفعّلة في اللعبة على هذا الجهاز</span><button id="hwCustomClear" title="إعادة أسئلة اللعبة">✕</button></div>
+      <label class="btn ghost hw-file">📂 افتح ملف أسئلة المعلم<input type="file" id="hwImport" accept=".json,application/json" hidden></label>
       <input id="hwPaste" class="hw-input" dir="ltr" placeholder="الصق هنا رابط الواجب من معلمك" autocomplete="off">
       <div class="row">
         <button class="btn" id="hwPasteGo">أضف الواجب</button>
@@ -266,6 +268,7 @@
   <div id="hwTeacher" class="screen dim" hidden>
     <div class="panel small">
       <h2>📤 للمعلم وولي الأمر</h2>
+      <button class="btn" id="hwfEdit">✏️ لوحة تعديل أسئلة اللعبة</button>
       <p class="hint">اكتب واجبًا، أو غيّر كلمات غرفة الإملاء، فتحصل على رابط ترسله إلى طلابك. يظهر ما كتبته لكل طالب يفتح الرابط.</p>
       <input id="hwfTeacher" class="hw-input" maxlength="60" placeholder="اسم المعلم" autocomplete="off">
       <input id="hwfEmail" class="hw-input" dir="ltr" maxlength="120" placeholder="بريدك لتسلّم الحلول (اختياري)" autocomplete="off">
@@ -303,7 +306,40 @@
     </div>
   </div>
 
-  <div id="owner">© 2026 لعبة «مدرسة الصداقة» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة</div>
+  <!-- ملكية ثابتة لا تدخل في لوحة المعلم -->
+  <!-- لوحة تعديل الأسئلة -->
+  <div id="hwEdit" class="screen dim" hidden>
+    <div class="panel">
+      <h2>✏️ لوحة تعديل الأسئلة</h2>
+      <p class="hint">صحّح أي سؤال أو احذفه أو أضف غيره ليناسب منهجك. يبقى تعديلك على هذا الجهاز وعند من تشاركه معه، ولا تتغير اللعبة الأصلية.</p>
+      <div class="hw-settings">
+        <label class="hw-label">الصف<select id="hweGrade" class="hw-input"></select></label>
+        <label class="hw-label">الغرفة<select id="hweRoom" class="hw-input"></select></label>
+      </div>
+      <p class="feedback" id="hweState"></p>
+      <div id="hweRows"></div>
+      <div class="hw-row" id="hweAdd">
+        <button class="btn ghost" data-add="choose">➕ سؤال باختيارات</button>
+        <button class="btn ghost" data-add="tiles">➕ سؤال بلاطات</button>
+        <button class="btn ghost" data-add="order">➕ سؤال ترتيب</button>
+      </div>
+      <div class="hw-row hw-gap">
+        <button class="btn" id="hweSave">💾 احفظ</button>
+        <button class="btn ghost" id="hweReset">↩️ إرجاع أسئلة اللعبة</button>
+        <button class="btn ghost" id="hweClose">إغلاق</button>
+      </div>
+      <p class="feedback" id="hweMsg"></p>
+      <h3 class="hw-label">📤 مشاركة أسئلتك مع طلابك</h3>
+      <p class="hint hw-small">كل طالب يلعب على جهازه، لذلك أرسل له هذا الملف أو الرابط ليفتحه مرة واحدة. يفتح الطالب الملف من «📥 واجباتي».</p>
+      <div class="hw-row">
+        <button class="btn ghost" id="hweFile">💾 نزّل ملف الأسئلة</button>
+        <button class="btn ghost" id="hweLink">🔗 أنشئ رابطًا</button>
+      </div>
+      <input id="hweLinkOut" class="hw-input" dir="ltr" readonly hidden>
+    </div>
+  </div>
+
+  <div id="owner">© 2026 لعبة «مدرسة الأصدقاء» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة · <a href="https://www.instagram.com/ostatha.mongia" target="_blank" rel="noopener">إنستغرام</a> · <a href="https://www.youtube.com/@shtshout" target="_blank" rel="noopener">يوتيوب شتشوت</a></div>
   <div id="fade"></div>
   <div id="loading" class="screen"><div class="spinner"></div><p>جارٍ تجهيز المدرسة...</p></div>
 </div>
@@ -326,6 +362,7 @@
 <script src="content/spelling-pools.js"></script>
 <script src="content/grammar-pools.js"></script>
 <script src="content/vocab-pools.js"></script>
+<script src="content/boss-pools.js"></script>
 <script src="js/homework.js"></script>
 <script src="js/game.js"></script>
 </body>

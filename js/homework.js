@@ -4,11 +4,11 @@
 // لا يُهزم الوحش تمامًا قبل حل الواجب، وانتهاء الوقت يُضعف البطل. التصحيح عند المعلم؛ اللعبة لا تصحح الإجابات.
 // يُحمَّل قبل game.js، وgame.js يستدعي HW.init ثم HW.pending وHW.gate.
 (() => {
-  const KEY = 'shtshout-homework', WORDS_KEY = 'shtshout-words';
+  const KEY = 'shtshout-homework', WORDS_KEY = 'shtshout-words', CUSTOM_KEY = 'shtshout-custom';
   const MAX_TEXT = 3000, MAX_Q = 40, DEFAULT_MINS = 15;
   const $ = (id) => document.getElementById(id);
   let ctx = { rooms: [], name: () => '', onTimeout: () => {} };
-  let items = [], draft = [], tickId = 0, words = null;
+  let items = [], draft = [], tickId = 0, words = null, custom = {};
 
   function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* لا شيء */ } }
@@ -33,14 +33,74 @@
     const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
   }
-  // يأخذ رابط واجب ويضيف ما فيه من واجبات؛ يعيد عدد الجديد، أو -1 إن كان الرابط غير صحيح
+  /* ---------- أسئلة المعلم: فحص كل ما يأتي من رابط أو ملف ---------- */
+  const str = (v, n) => String(v === undefined || v === null ? '' : v).trim().slice(0, n);
+  function cleanStep(s) {
+    if (!s || typeof s !== 'object') return null;
+    if (s.type === 'tiles' || s.type === 'choose') {
+      const answer = str(s.answer, 120), q = str(s.q, 400);
+      const options = [...new Set((Array.isArray(s.options) ? s.options : []).map((o) => str(o, 120)).filter(Boolean))].slice(0, 4);
+      if (!q || !answer) return null;
+      if (!options.includes(answer)) { if (options.length >= 4) options.pop(); options.push(answer); }
+      if (options.length < 2) return null;
+      const out = { type: s.type, q, answer, options };
+      if (s.listen) out.listen = str(s.listen, 400);
+      return out;
+    }
+    if (s.type === 'order' || s.type === 'memory') {
+      const its = (Array.isArray(s.items) ? s.items : []).map((o) => str(o, 80)).filter(Boolean).slice(0, 10);
+      if (its.length < 2) return null;
+      const out = { type: s.type, title: str(s.title, 200) || 'رتّب بالترتيب الصحيح', items: its };
+      if (s.type === 'memory') out.show = clampInt(s.show, 2, 20, 6);
+      return out;
+    }
+    return null;
+  }
+  function cleanLibrary(l) {
+    if (!l || typeof l !== 'object') return null;
+    const out = {};
+    if (Array.isArray(l.pages)) { const p = l.pages.map((x) => str(x, 300)).filter(Boolean); if (p.length === 5) out.pages = p; }
+    if (Array.isArray(l.rounds)) {
+      const r = l.rounds.map((x) => {
+        const answer = str(x && x.answer, 80), clue = str(x && x.clue, 300);
+        const options = [...new Set((Array.isArray(x && x.options) ? x.options : []).map((o) => str(o, 80)).filter(Boolean))];
+        return clue && answer && options.length === 4 && options.includes(answer) ? { clue, answer, options } : null;
+      }).filter(Boolean);
+      if (r.length) out.rounds = r;
+    }
+    return out.pages || out.rounds ? out : null;
+  }
+  // يدمج أسئلة واردة؛ يعيد عدد الغرف التي تغيرت
+  function mergeCustom(c) {
+    if (!c || typeof c !== 'object') return 0;
+    let n = 0;
+    Object.keys(c).forEach((g) => {
+      const gr = clampInt(g, 1, 9, 0), rooms = c[g];
+      if (!gr || !rooms || typeof rooms !== 'object') return;
+      Object.keys(rooms).forEach((id) => {
+        if (!(ctx.editRooms || []).some((r) => r.id === id)) return;
+        const v = id === 'library' ? cleanLibrary(rooms[id]) : (Array.isArray(rooms[id]) ? rooms[id].map(cleanStep).filter(Boolean).slice(0, 80) : null);
+        if (!v || (Array.isArray(v) && !v.length)) return;
+        (custom[gr] = custom[gr] || {})[id] = v;
+        n++;
+      });
+    });
+    if (n) saveCustom();
+    return n;
+  }
+  function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) { /* لا شيء */ } }
+  const hasCustom = () => Object.keys(custom).some((g) => Object.keys(custom[g] || {}).length);
+  // يأخذ رابط واجب ويضيف ما فيه؛ يعيد عدد الجديد، أو -1 إن كان الرابط غير صحيح
   function addFromLink(text) {
     const m = String(text || '').match(/#hw=([\w-]+)/);
     if (!m) return -1;
     let d;
     try { d = decode(m[1]); } catch (e) { return -1; }
+    return addPayload(d);
+  }
+  function addPayload(d) {
     if (!d || !Array.isArray(d.items) || !d.id) return -1;
-    let added = 0;
+    let added = mergeCustom(d.custom);
     if (d.words && Array.isArray(d.words.list) && d.words.list.length) {
       const id = String(d.id).slice(0, 20);
       if (!words || words.id !== id) added++;
@@ -85,7 +145,7 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
   function sheet(it, heading, body) {
-    return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(it.title)}</title><style>body{font-family:Tahoma,Arial,sans-serif;max-width:760px;margin:30px auto;padding:0 20px;line-height:1.9;font-size:18px}h1{font-size:26px;margin:0 0 6px}.m{color:#555;font-size:15px;margin-bottom:18px}.t{white-space:pre-wrap;border:2px solid #ddd;border-radius:10px;padding:14px}.f{margin-top:28px;font-size:13px;color:#666}</style></head><body><h1>${esc(heading)}</h1><div class="m">${esc(roomName(it.room))}${it.teacher ? ' · المعلم: ' + esc(it.teacher) : ''}${ctx.name() ? ' · الطالب: ' + esc(ctx.name()) : ' · اسم الطالب: ................'}</div><div class="t">${esc(body)}</div><p class="f">© 2026 لعبة «مدرسة الصداقة» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة</p></body></html>`;
+    return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(it.title)}</title><style>body{font-family:Tahoma,Arial,sans-serif;max-width:760px;margin:30px auto;padding:0 20px;line-height:1.9;font-size:18px}h1{font-size:26px;margin:0 0 6px}.m{color:#555;font-size:15px;margin-bottom:18px}.t{white-space:pre-wrap;border:2px solid #ddd;border-radius:10px;padding:14px}.f{margin-top:28px;font-size:13px;color:#666}</style></head><body><h1>${esc(heading)}</h1><div class="m">${esc(roomName(it.room))}${it.teacher ? ' · المعلم: ' + esc(it.teacher) : ''}${ctx.name() ? ' · الطالب: ' + esc(ctx.name()) : ' · اسم الطالب: ................'}</div><div class="t">${esc(body)}</div><p class="f">© 2026 لعبة «مدرسة الأصدقاء» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة</p></body></html>`;
   }
   const fileName = (it, word) => `${word}-${it.title}`.replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 60) + '.html';
   // نص الإجابات بأرقامها، مع الوقت، كما يصل إلى المعلم
@@ -115,6 +175,7 @@
       b.onclick = () => openView(it, null);
       box.appendChild(b);
     });
+    $('hwCustomRow').hidden = !hasCustom();
     $('hwWordsRow').hidden = !words;
     if (words) $('hwWordsInfo').textContent = `كلمات المعلم في غرفة الإملاء${words.topic ? ': ' + words.topic : ''} (${words.list.length})`;
     $('hwListMsg').textContent = msg || '';
@@ -263,14 +324,121 @@
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const link = location.origin + location.pathname + '#hw=' + encode({ v: 2, id, teacher: $('hwfTeacher').value.trim(), email, items: draft, words: list.length ? { topic: $('hwfTopic').value.trim(), list } : undefined });
     $('hwfLink').value = link;
-    $('hwfWhats').href = 'https://wa.me/?text=' + encodeURIComponent('واجب جديد في لعبة مدرسة الصداقة:\n' + link);
+    $('hwfWhats').href = 'https://wa.me/?text=' + encodeURIComponent('واجب جديد في لعبة مدرسة الأصدقاء:\n' + link);
     $('hwfOut').hidden = false;
     $('hwfMsg').textContent = link.length > 8000 ? 'الرابط طويل جدًا وقد لا يفتح عند بعض الطلاب: قسّم الواجب، أو ضعه في ملف وأرفق رابطه.' : 'جاهز. أرسل الرابط إلى طلابك.';
   }
 
+  /* ---------- لوحة تعديل الأسئلة ---------- */
+  let editList = null;
+  const editKey = () => [clampInt($('hweGrade').value, 1, 9, 1), $('hweRoom').value];
+  function field(ph, val, cls, oninput) {
+    const t = document.createElement('textarea'); t.rows = 1; t.dir = 'rtl'; t.className = 'hw-input ' + (cls || ''); t.placeholder = ph; t.value = val || ''; t.oninput = () => oninput(t.value);
+    return t;
+  }
+  const splitList = (v) => v.split(/[،,\n]/).map((x) => x.trim()).filter(Boolean);
+  function renderEdit() {
+    const box = $('hweRows');
+    box.innerHTML = '';
+    const lib = !Array.isArray(editList);
+    $('hweAdd').hidden = lib;
+    if (lib) {
+      const h1 = document.createElement('h3'); h1.textContent = 'صفحات القصة الخمس بالترتيب'; h1.className = 'hw-label'; box.appendChild(h1);
+      (editList.pages || []).forEach((p, k) => box.appendChild(field('الصفحة ' + (k + 1), p, '', (v) => { editList.pages[k] = v; })));
+      const h2 = document.createElement('h3'); h2.textContent = 'ألغاز جسر الكلمات (أربعة خيارات لكل لغز)'; h2.className = 'hw-label'; box.appendChild(h2);
+      (editList.rounds || []).forEach((r) => {
+        const c = document.createElement('div'); c.className = 'hw-edit-row';
+        c.append(field('اللغز', r.clue, '', (v) => { r.clue = v; }), field('الجواب الصحيح', r.answer, '', (v) => { r.answer = v; }), field('الخيارات الأربعة، بين كل خيار وآخر فاصلة', (r.options || []).join('، '), '', (v) => { r.options = splitList(v); }));
+        box.appendChild(c);
+      });
+      return;
+    }
+    const NAMES = { tiles: 'بلاطات', choose: 'اختيارات', order: 'ترتيب', memory: 'حفظ' };
+    editList.forEach((s, k) => {
+      const c = document.createElement('div'); c.className = 'hw-edit-row';
+      const top = document.createElement('div'); top.className = 'hw-edit-top';
+      const tag = document.createElement('b'); tag.textContent = `${k + 1} · ${NAMES[s.type] || s.type}`;
+      const del = document.createElement('button'); del.textContent = '🗑️ حذف'; del.onclick = () => { editList.splice(k, 1); renderEdit(); };
+      top.append(tag, del); c.appendChild(top);
+      if (s.type === 'order' || s.type === 'memory') {
+        c.append(field('عنوان السؤال', s.title, '', (v) => { s.title = v; }), field('القطع بالترتيب الصحيح، بين كل قطعة وأخرى فاصلة', (s.items || []).join('، '), '', (v) => { s.items = splitList(v); }));
+      } else {
+        c.append(field('السؤال', s.q, '', (v) => { s.q = v; }), field('الجواب الصحيح', s.answer, '', (v) => { s.answer = v; }), field('الخيارات، بين كل خيار وآخر فاصلة', (s.options || []).join('، '), '', (v) => { s.options = splitList(v); }));
+        if (s.listen !== undefined) c.append(field('الجملة التي يسمعها الطالب', s.listen, '', (v) => { s.listen = v; }));
+      }
+      box.appendChild(c);
+    });
+  }
+  function loadEdit() {
+    const [g, id] = editKey();
+    const cur = custom[g] && custom[g][id];
+    editList = JSON.parse(JSON.stringify(cur || ctx.bank(g, id)));
+    $('hweState').textContent = cur ? 'هذه أسئلتك المعدّلة.' : 'هذه أسئلة اللعبة الأصلية.';
+    $('hweMsg').textContent = '';
+    renderEdit();
+  }
+  function saveEdit() {
+    const [g, id] = editKey();
+    let v, bad = 0;
+    if (Array.isArray(editList)) {
+      v = editList.map((s) => { const c = cleanStep(s); if (!c) bad++; return c; }).filter(Boolean);
+      if (bad) { $('hweMsg').textContent = `${bad} من الأسئلة ناقصة: تأكد من السؤال والجواب والخيارات.`; return; }
+      if (!v.length) { $('hweMsg').textContent = 'أبقِ سؤالًا واحدًا على الأقل، أو اضغط «إرجاع أسئلة اللعبة».'; return; }
+    } else {
+      v = cleanLibrary(editList);
+      if (!v || !v.pages || !v.rounds || v.rounds.length !== editList.rounds.length) { $('hweMsg').textContent = 'تأكد من الصفحات الخمس، ومن أربعة خيارات لكل لغز فيها الجواب الصحيح.'; return; }
+    }
+    (custom[g] = custom[g] || {})[id] = v;
+    saveCustom();
+    $('hweState').textContent = 'هذه أسئلتك المعدّلة.';
+    $('hweMsg').textContent = 'حُفظ على هذا الجهاز ✅ يبدأ العمل بها عند دخول الغرفة.';
+    renderList();
+  }
+  const sharePayload = () => ({ v: 3, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), items: [], custom });
+
   function init(c) {
     ctx = c;
     items = load();
+    try { const cu = JSON.parse(localStorage.getItem(CUSTOM_KEY)); if (cu && typeof cu === 'object') { custom = {}; mergeCustom(cu); } } catch (e) { /* لا شيء */ }
+    $('hweGrade').innerHTML = (ctx.grades || []).map((n, i) => `<option value="${i + 1}">الصف ${esc(n)}</option>`).join('');
+    $('hweRoom').innerHTML = (ctx.editRooms || []).map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    $('hwfEdit').onclick = () => { $('hwTeacher').hidden = true; $('hweLinkOut').hidden = true; loadEdit(); $('hwEdit').hidden = false; };
+    $('hweClose').onclick = () => { $('hwEdit').hidden = true; $('hwTeacher').hidden = false; };
+    $('hweGrade').onchange = loadEdit; $('hweRoom').onchange = loadEdit;
+    $('hweSave').onclick = saveEdit;
+    $('hweAdd').querySelectorAll('[data-add]').forEach((b) => { b.onclick = () => {
+      const type = b.dataset.add;
+      editList.unshift(type === 'order' ? { type, title: '', items: [] } : { type, q: '', answer: '', options: [] });
+      renderEdit();
+    }; });
+    $('hweReset').onclick = () => {
+      const [g, id] = editKey();
+      if (custom[g]) { delete custom[g][id]; saveCustom(); }
+      loadEdit(); renderList();
+      $('hweMsg').textContent = 'عادت أسئلة اللعبة الأصلية إلى هذه الغرفة.';
+    };
+    $('hweFile').onclick = () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(sharePayload())], { type: 'application/json' }));
+      a.download = 'أسئلة-مدرسة-الأصدقاء.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    };
+    $('hweLink').onclick = () => {
+      if (!hasCustom()) { $('hweMsg').textContent = 'احفظ تعديلًا أولًا.'; return; }
+      const link = location.origin + location.pathname + '#hw=' + encode(sharePayload());
+      if (link.length > 8000) { $('hweLinkOut').hidden = true; $('hweMsg').textContent = 'أسئلتك كثيرة على رابط واحد، فأرسل الملف بدلًا منه.'; return; }
+      $('hweLinkOut').value = link; $('hweLinkOut').hidden = false; $('hweLinkOut').select();
+    };
+    $('hwImport').onchange = async (e) => {
+      const f = e.target.files[0];
+      e.target.value = '';
+      if (!f) return;
+      let n = -1;
+      try { if (f.size < 2000000) n = addPayload(JSON.parse(await f.text())); } catch (err) { n = -1; }
+      openList(n > 0 ? 'صارت أسئلة المعلم في اللعبة ✅ ادخل الغرفة لتظهر.' : 'هذا الملف غير صحيح.');
+    };
+    $('hwCustomClear').onclick = () => { custom = {}; saveCustom(); renderList('عادت أسئلة اللعبة الأصلية.'); };
     $('hwfRoom').innerHTML = ctx.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
     $('hwfText').maxLength = MAX_TEXT;
     $('btnTeacher').onclick = () => { $('hwTeacher').hidden = false; };
@@ -299,5 +467,5 @@
     } else renderList();
   }
 
-  window.HW = { init, pending, gate, openList, words: () => words };
+  window.HW = { init, pending, gate, openList, words: () => words, custom: (g, id) => (custom[g] && custom[g][id]) || null };
 })();

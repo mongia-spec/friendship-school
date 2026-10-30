@@ -137,5 +137,21 @@ window.VOICES = {
  "warn-2": "voices/warn-2.mp3",
  "warn-3": "voices/warn-3.mp3",
  "warn-4": "voices/warn-4.mp3",
- "warn-5": "voices/warn-5.mp3"
+ "warn-5": "voices/warn-5.mp3",
+ "roomsx-story-kidnap-0": "voices/roomsx-story-kidnap-0.mp3",
+ "roomsx-story-kidnap-1": "voices/roomsx-story-kidnap-1.mp3",
+ "roomsx-story-kidnap-2": "voices/roomsx-story-kidnap-2.mp3",
+ "roomsx-story-kidnap-3": "voices/roomsx-story-kidnap-3.mp3",
+ "roomsx-story-locked-0": "voices/roomsx-story-locked-0.mp3",
+ "roomsx-story-notHere-0": "voices/roomsx-story-notHere-0.mp3",
+ "roomsx-story-searched-0": "voices/roomsx-story-searched-0.mp3",
+ "roomsx-story-door-0": "voices/roomsx-story-door-0.mp3",
+ "roomsx-story-taken-0": "voices/roomsx-story-taken-0.mp3",
+ "rooms-mongia-intro-0": "voices/rooms-mongia-intro-0.mp3",
+ "rooms-mongia-intro-1": "voices/rooms-mongia-intro-1.mp3",
+ "rooms-mongia-intro-2": "voices/rooms-mongia-intro-2.mp3",
+ "rooms-mongia-win-0": "voices/rooms-mongia-win-0.mp3",
+ "rooms-mongia-win-1": "voices/rooms-mongia-win-1.mp3",
+ "rooms-mongia-win-2": "voices/rooms-mongia-win-2.mp3",
+ "rooms-mongia-win-3": "voices/rooms-mongia-win-3.mp3"
 };

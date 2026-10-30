@@ -1,4 +1,4 @@
-// مدرسة الصداقة – سرّ الوحوش الستة
+// مدرسة الأصدقاء – سرّ الكتاب المخفي
 // المستوى الأول: الساحة + المكتبة المسحورة. كل النصوص في content/level1.js.
 (() => {
 'use strict';
@@ -21,13 +21,13 @@ if (isTouch) document.body.classList.add('touch');
 const G = {
   stage: 'intro', hero: 'boy', area: 'yard', lock: 1, paused: false, playing: false, busy: false,
   cam: null, camYaw: 0, camDist: 6.5, camPitch: 0.42,
-  energy: 100, stars: new Set(), skills: {}, cleared: new Set(), pages: 0, health: 100, round: 0, spellIdx: 0, wrongTiles: 0, time: 0,
+  energy: 100, kidnapped: false, vitamins: false, stars: new Set(), skills: {}, cleared: new Set(), pages: 0, health: 100, round: 0, spellIdx: 0, wrongTiles: 0, time: 0,
 };
 function loadSave() {
   try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; }
 }
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, kidnapped: G.kidnapped, vitamins: G.vitamins, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
 }
 
 /* ---------------- المحرك ---------------- */
@@ -1204,7 +1204,7 @@ function buildRoom(i) {
       lb.position.set(c.x + dx, 1.9, c.z + 3.6); lb.visible = false;
       return { x: c.x + dx, z: c.z + 3.6, mesh: t, lb, word: '', on: false };
     });
-    if (data.captive) {
+    if (data.captive || data.boss) {
       const cx = c.x - 7, cz = c.z - 5.5;
       r.cage = new THREE.Group(); r.cage.position.set(cx, 0, cz); scene.add(r.cage);
       box(2.8, 0.25, 2.8, 0x4a3a6a, 0, 0.12, 0, r.cage);
@@ -1214,13 +1214,14 @@ function buildRoom(i) {
         r.bars.push(cyl(0.05, 0.05, 3, mat(hex, { emissive: hex, emissiveIntensity: 0.4 }), sx, 1.6, sz, r.cage, 6));
       }
       r.cageCol = addCol(cx - 1.4, cx + 1.4, cz - 1.4, cz + 1.4);
-      r.captive = yard.friends[1 + Object.keys(STUDENTS).indexOf(data.captive.sprite)];
+      if (data.captive) r.captive = yard.friends[1 + Object.keys(STUDENTS).indexOf(data.captive.sprite)];
+      else {
+        r.held = charSprite('mongia', 1.7);
+        r.held.position.set(cx, 0, cz);
+        (window.extraChars = window.extraChars || []).push(r.held);
+        r.monster.boss = 1.7;
+      }
       r.cagePos = new V3(cx, 0, cz);
-    }
-    if (data.final) {           // ماما منجية تحضر الاختبار الأخير لتطمئن الأبطال
-      r.mongia = charSprite('mongia', 1.7);
-      r.mongia.position.set(c.x - 6, 0, c.z - 1);
-      (window.extraChars = window.extraChars || []).push(r.mongia);
     }
   }
   if (T === 'class') {          // الأصدقاء المُنقَذون يعودون إلى مقاعدهم
@@ -1236,7 +1237,7 @@ function buildRoom(i) {
     cyl(1.2, 1.4, 1, 0xd4a64a, 0, 0.5, 0, r.book, 16);
     const pg = box(2.2, 0.2, 1.5, 0xfffaf0, 0, 1.15, 0, r.book); pg.rotation.x = -0.3;
     r.bookGlow = glow(0xffd23f, 6, r.book); r.bookGlow.position.y = 1.6;
-    label('كتاب الصداقة', 0.5, { size: 60, border: '#d4a64a' }, r.book).position.y = 2.8;
+    label('الكتاب المخفي', 0.5, { size: 60, border: '#d4a64a' }, r.book).position.y = 2.8;
     addCol(c.x - 1.4, c.x + 1.4, c.z - 7.4, c.z - 4.6);
   }
   // نجمتان في كل غرفة، إحداهما عالية
@@ -1316,7 +1317,7 @@ function setRoomHealth(h) {
     toast(`😡 ${roomRun.r.data.monster.name}: ${rage === 1 ? 'لن تهزمني بسهولة!' : 'سأقاوم حتى آخر لحظة!'}`, 'bad', 2800);
   }
   $('monsterFill').style.width = roomRun.health + '%';
-  roomRun.r.monster.target = 0.55 + 0.6 * roomRun.health / 100;
+  roomRun.r.monster.target = (0.55 + 0.6 * roomRun.health / 100) * (roomRun.r.monster.boss || 1);
 }
 // الوحش المهزوم يصير صغيرًا لطيفًا مبتسمًا
 function befriendMonster(m) {
@@ -1335,9 +1336,13 @@ function roomWords(lines, r) {
   SPEAKER[mk] = { color: d.monster.color, face: '👾', bg: '#fff3f0' };
   return lines.map((l) => Object.assign({}, l, { who: l.who === 'friend' ? (d.captive ? d.captive.sprite : 'shtshouta') : l.who === 'monster' ? mk : l.who }));
 }
+function setRiddle(small, text) {
+  const s = document.createElement('small'); s.textContent = small;
+  $('riddle').replaceChildren(s, document.createTextNode(text));
+}
 function riddleText(text) {
   const rr = roomRun;
-  $('riddle').innerHTML = `<small>${rr.r.data.monster.name} · ${RX.step.replace('{n}', Math.min(rr.total, rr.done + 1)).replace('{total}', rr.total)}</small>${text}`;
+  setRiddle(`${rr.r.data.monster.name} · ${RX.step.replace('{n}', Math.min(rr.total, rr.done + 1)).replace('{total}', rr.total)}`, text);
   $('riddle').hidden = false;
 }
 const wrongMsg = () => RX.wrong[Math.random() * RX.wrong.length | 0];
@@ -1559,7 +1564,9 @@ async function stepMemory(st, title) {
   $('quizTitle').textContent = title;
   $('quizListen').hidden = true;
   $('quizQ').textContent = 'احفظ هذه الكلمات بالترتيب! كرّرها في سرّك.';
-  $('quizOpts').innerHTML = '<div class="quiz-mem">' + st.items.map((x) => `<span>${x}</span>`).join('') + '</div>';
+  const memBox = document.createElement('div'); memBox.className = 'quiz-mem';
+  st.items.forEach((x) => { const sp = document.createElement('span'); sp.textContent = x; memBox.appendChild(sp); });
+  $('quizOpts').replaceChildren(memBox);
   $('quiz').hidden = false;
   for (let k = st.show; k > 0; k--) { $('quizFb').style.color = '#5a33b8'; $('quizFb').textContent = '⏳ ' + k; await wait2(1000); }
   $('quiz').hidden = true;
@@ -1616,6 +1623,29 @@ function misspell(word) {
   return shuffle([...out]);
 }
 const orderStep = (w) => { const plain = w.replace(/[\u064B-\u0652]/g, ''); return { type: 'order', title: `أعد حروف الكلمة إلى مكانها: «${plain}»`, items: [...plain] }; };
+// أسئلة عدّلها المعلم لهذا الصف والغرفة (على جهازه وعند من يفتح رابطه أو ملفه فقط)
+function customSteps(id) {
+  const cu = HW.custom(G.grade, id);
+  if (!Array.isArray(cu) || !cu.length) return null;
+  const list = cu.map((s) => Object.assign({ custom: true }, s));
+  const g = gradeData(), base = (g && g[id] && g[id].steps) || BASE_CONTENT.steps[id];
+  if (base.some((s) => s.type === 'collect')) {     // غرفة المراجعة: أسئلة المعلم عند مفاتيح المعرفة
+    return [{ type: 'collect', items: list.filter((s) => s.options).slice(0, 7) }];
+  }
+  return shuffle(list);
+}
+// كل أسئلة الغرفة لهذا الصف، لتظهر في لوحة المعلم
+function teacherBank(grade, id) {
+  const g = (window.GRADES || {})[grade];
+  if (id === 'library') {
+    const l = (g && g.library) || {};
+    return { pages: l.pages || BASE_CONTENT.pages, rounds: l.rounds || BASE_CONTENT.rounds };
+  }
+  const base = (g && g[id] && g[id].steps) || BASE_CONTENT.steps[id] || [];
+  const flat = base.flatMap((s) => (s.type === 'collect' ? s.items.map((x) => Object.assign({ type: 'choose' }, x)) : [s]));
+  const pool = id === 'spelling' ? ((window.SPELLING_POOLS || {})[grade] ? window.SPELLING_POOLS[grade].tiles.map((s) => Object.assign({ type: 'tiles' }, s)).concat(window.SPELLING_POOLS[grade].words.map(orderStep)) : []) : ((window.ROOM_POOLS || {})[id] || {})[grade] || [];
+  return flat.concat(pool);
+}
 function spellingSteps() {
   const custom = HW.words();
   if (custom) {
@@ -1627,6 +1657,8 @@ function spellingSteps() {
     });
     return steps;
   }
+  const cu = customSteps('spelling');
+  if (cu) return cu;
   const g = gradeData(), base = (g && g.spelling && g.spelling.steps) || BASE_CONTENT.steps.spelling;
   const pool = (window.SPELLING_POOLS || {})[G.grade];
   if (!pool) return base;
@@ -1636,17 +1668,19 @@ function spellingSteps() {
 }
 // بنك أسئلة الغرفة حسب الصف: في كل دخول مزيج جديد من الأسئلة
 function roomSteps(id) {
+  const cu = customSteps(id);
+  if (cu) return cu;
   const g = gradeData(), base = (g && g[id] && g[id].steps) || BASE_CONTENT.steps[id];
   const pool = ((window.ROOM_POOLS || {})[id] || {})[G.grade];
   if (!pool) return base;
   const all = pool.concat(base);
   const take = (type, n) => shuffle(all.filter((s) => s.type === type)).slice(0, n);
+  if (id === 'mongia') return shuffle([...take('tiles', 6), ...take('choose', 6)]);   // المعركة الأخيرة أطول
   return shuffle([...take('tiles', 5), ...take('choose', 3), ...take('order', 2)]);
 }
 async function startRoomFight(r) {
   const d = r.data, c = roomPos(r.i);
-  if (r.room.id === 'spelling') d.steps = spellingSteps();
-  else if ((window.ROOM_POOLS || {})[r.room.id]) d.steps = roomSteps(r.room.id);
+  d.steps = r.room.id === 'spelling' ? spellingSteps() : roomSteps(r.room.id);
   const units = d.steps.reduce((n, st) => n + (st.type === 'collect' ? st.items.length : 1), 0);
   roomRun = { r, active: true, done: 0, total: units, health: 100, wrong: 0, onTile: null, onKey: null, keys: [], chase: true };
   $('monsterName').textContent = d.monster.name;
@@ -1678,7 +1712,7 @@ async function startRoomFight(r) {
       $('riddle').hidden = true;
       startAttack(attackSeconds(st));
       if (st.type === 'order') await openOrder({ title: st.title, hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: d.hint });
-      else if (st.type === 'choose') await openQuiz(st, title, listenId(r.room.id, k));
+      else if (st.type === 'choose') await openQuiz(st, title, st.custom ? 'custom' : listenId(r.room.id, k));
       else if (st.type === 'memory') { stopAttack(); await stepMemory(st, title); }
       stopAttack();
     }
@@ -1692,11 +1726,78 @@ async function startRoomFight(r) {
   setRoomHealth(0);
   await winRoom(r);
 }
+// النهاية: يصغر الإهمال، تخرج المعلمة، تعود الوحوش بأصواتها إلى الكتاب، وينغلق بقفل «تغلّب على مخاوفك»
+async function bossWin(r) {
+  const d = r.data, c = roomPos(r.i), m = r.monster, lines = roomWords(d.win, r);
+  G.lock++;
+  await camTo(new V3(c.x + 1, 3.4, c.z + 3), m.g.position.clone().add(new V3(0, 2, 0)), 0.8);
+  SFX.play('growl');
+  await say(lines.slice(0, 1));
+  SFX.play('magic');
+  const s0 = m.scale;
+  await tween(1.6, (k) => { m.inner.rotation.y = k * PI * 8; m.scale = s0 + (0.05 - s0) * k; });
+  m.g.visible = false; r.monsterCol.on = false;
+  burst(m.g.position.clone().add(new V3(0, 1, 0)), 0x7a1fa2, 60, 7);
+  // فتح القفص
+  SFX.play('door');
+  await camTo(new V3(c.x - 4, 2.6, c.z), r.held.position.clone().add(new V3(0, 1.2, 0)), 0.7);
+  await tween(0.9, (k) => { r.bars.forEach((b) => { b.position.y = 1.6 - ease(k) * 3.4; }); });
+  r.cageCol.on = false;
+  burst(r.held.position.clone().add(new V3(0, 1.5, 0)), 0xffe066, 50, 6);
+  SFX.play('win');
+  await say(lines.slice(1, 2));
+  // الكتاب في وسط الغرفة
+  const book = new THREE.Group(); book.position.set(c.x, 0, c.z); scene.add(book);
+  box(3, 0.4, 2.2, 0x3b1f85, 0, 0.9, 0, book);
+  box(2.8, 0.1, 2, 0xfffaf0, 0, 1.15, 0, book);
+  const lid = new THREE.Group(); lid.position.set(-1.5, 1.28, 0); book.add(lid);
+  box(3, 0.12, 2.2, 0x5a33b8, 1.5, 0, 0, lid);
+  lid.rotation.z = 2.2;
+  glow(0xffd23f, 7, book).position.y = 1.6;
+  r.finalBook = book;
+  await camTo(new V3(c.x + 1, 3.6, c.z + 7), new V3(c.x, 1.3, c.z), 1);
+  const names = Object.values(RC).map((x) => x.monster.name).concat(C.names.monster || 'قِرطاس');
+  const flying = names.map((nm, n) => {
+    const l = label(nm, 0.55, { size: 60, border: '#7a1fa2' });
+    const a = n / names.length * PI * 2;
+    return { l, a, d: n * 0.05 };
+  });
+  const flight = tween(5, (k) => {
+    flying.forEach((f) => {
+      const t = Math.max(0, Math.min(1, (k - f.d) / 0.5)), rad = 8 * (1 - t);
+      f.l.position.set(c.x + Math.cos(f.a + t * 3) * rad, 1.4 + (1 - t) * 3, c.z + Math.sin(f.a + t * 3) * rad);
+      f.l.visible = t < 1;
+    });
+  });
+  [0, 0.8, 1.6, 2.4].forEach((s) => setTimeout(() => { SFX.play('growl'); }, s * 1000));
+  await say(lines.slice(2, 3));
+  await flight;
+  flying.forEach((f) => scene.remove(f.l));
+  await tween(1, (k) => { lid.rotation.z = 2.2 * (1 - ease(k)); });
+  SFX.play('door');
+  const lockSign = label('🔒 تغلّب على مخاوفك', 0.9, { size: 80, border: '#d4a64a' }, book);
+  lockSign.position.y = 3;
+  burst(new V3(c.x, 2, c.z), 0xffd23f, 70, 7);
+  SFX.play('win');
+  await say(lines.slice(3));
+  await wait(0.8);
+  G.cleared.add('mongia');
+  setEnergy(100);
+  r.held.visible = false; r.mongia.visible = true;
+  G.camPitch = 0.1;
+  save();
+  G.cam = null;
+  G.lock--;
+  roomRun = null;
+  refreshHallDoors();
+  showEnd(RX.finalCard);
+}
 async function winRoom(r) {
   const d = r.data, c = roomPos(r.i), m = r.monster;
   roomRun.active = false;
   $('riddle').hidden = true;
   $('monsterBar').hidden = true;
+  if (d.boss) { await bossWin(r); return; }
   G.lock++;
   await camTo(new V3(c.x + 1, 3, c.z + 2), m.g.position.clone().add(new V3(0, 1.2, 0)), 0.8);
   SFX.play('magic');
@@ -1727,11 +1828,11 @@ async function winRoom(r) {
   if (r.room.id === 'spelling' && HW.words()) G.wordsDone = HW.words().id;
   setEnergy(G.energy + 30);
   gainSkill(r.room.id, 3, RX.skillWin);
+  if (SEARCH_ROOMS.includes(r.room.id) && G.kidnapped) await say(RX.story.notHere);
   G.cam = null;
   G.lock--;
   roomRun = null;
   refreshTip();
-  if (allCleared()) { await wait(0.8); showEnd(RX.finalCard); }
 }
 // حال الغرفة عند الدخول: الوحش مستيقظ، أو صديق صغير إن هُزم، والمحتجز في قفصه
 function setupRoom(r) {
@@ -1741,27 +1842,40 @@ function setupRoom(r) {
   const won = G.cleared.has(r.room.id);
   const m = r.monster;
   if (won) { befriendMonster(m); m.scale = m.target; r.monsterCol.on = false; }
-  else { m.happy = false; m.target = 1; m.scale = 1; m.orbit.forEach((o) => { o.l.visible = true; }); r.monsterCol.on = true; }
+  else { m.happy = false; m.target = m.boss || 1; m.scale = m.boss || 1; m.orbit.forEach((o) => { o.l.visible = true; }); r.monsterCol.on = true; }
   r.tiles.forEach((t) => { t.lb.visible = false; t.on = false; t.mesh.material = mat(0xfff3d6); });
+  if (d.boss) {
+    r.mongia.visible = won; r.held.visible = !won;
+    r.bars.forEach((b) => { b.position.y = won ? -1.8 : 1.6; });
+    r.cageCol.on = !won;
+    m.g.visible = !won;
+  }
   if (r.captive) {
     r.bars.forEach((b) => { b.position.y = won ? -1.8 : 1.6; });
     r.cageCol.on = !won;
     if (!team.some((t) => t.obj === r.captive)) { r.captive.visible = true; r.captive.scale.setScalar(1); r.captive.position.copy(r.cagePos); }
   }
 }
+// مراحل القصة: ستة زملاء يتحررون، ثم الخطف والبحث في أربع غرف، ثم الكتب والفيتامينات، ثم الإهمال
+const STORY_FIRST = ['spelling', 'grammar', 'listening', 'vocab', 'expression'];
+const SEARCH_ROOMS = ['homework', 'memory', 'review', 'tests'];
+const sixFreed = () => G.stage === 'done' && STORY_FIRST.every((id) => G.cleared.has(id));
+const searchDone = () => G.kidnapped && SEARCH_ROOMS.every((id) => G.cleared.has(id));
 const newWords = () => { const w = HW.words(); return !!w && G.wordsDone !== w.id; };
 function roomState(i) {
   const room = SC.rooms[i];
   if (i === 0) return G.stage === 'done' ? 'done' : 'open';
   if (RC[room.id]) {
     if (G.cleared.has(room.id)) return 'done';
-    return 'open';   // يبدأ اللاعب بأي باب
+    if (room.id === 'mongia') return (searchDone() && G.vitamins) || ALL_OPEN ? 'open' : 'locked';
+    if (SEARCH_ROOMS.includes(room.id)) return G.kidnapped || HW.pending(room.id) || ALL_OPEN ? 'open' : 'locked';   // واجب المعلم يفتح الغرفة لهذا الطالب
+    return 'open';   // يبدأ اللاعب بأي من الغرف الأولى
   }
   if (room.theme === 'secret') return allCleared() || ALL_OPEN ? 'open' : 'locked';
   return 'open';
 }
 // هل هُزمت كل الوحوش؟ (المكتبة وغرف المهارات)
-function allCleared() { return G.stage === 'done' && RX.order.every((id) => G.cleared.has(id)); }
+function allCleared() { return G.cleared.has('mongia'); }
 function nextRoomName() {
   if (allCleared()) return null;
   const id = RX.order.find((x) => !G.cleared.has(x));
@@ -1864,6 +1978,60 @@ async function enterHall(fromRoom = null) {
   await fade(false);
   G.lock--;
   refreshTip();
+  await storyCheck();
+}
+async function storyCheck() {
+  if (!G.kidnapped && sixFreed()) {
+    G.kidnapped = true; save();
+    refreshHallDoors();
+    SFX.play('growl');
+    burst(P.pos.clone().setY(2.4), 0x7a1fa2, 40, 7);
+    await say(RX.story.kidnap);
+    refreshTip();
+  }
+  showHallBooks();
+  if (searchDone() && !G.searchSaid && !G.vitamins) {
+    G.searchSaid = true;
+    await say(RX.story.searched);
+  }
+}
+// كتب المهارات والفيتامينات أمام باب غرفة المعلمة
+function showHallBooks() {
+  if (!hall.built) return;
+  const want = searchDone() && !G.vitamins;
+  if (want && !hall.books) {
+    const f = hall.doors[11].front;
+    hall.books = new THREE.Group(); hall.books.position.set(f.x, 0, f.z); scene.add(hall.books);
+    SKILLS.forEach((k, n) => {
+      const a = n / SKILLS.length * PI * 2;
+      const b = box(0.5, 0.14, 0.7, new THREE.Color(k.color).getHex(), Math.cos(a) * 1.4, 0.2, Math.sin(a) * 1.4, hall.books);
+      b.rotation.y = a;
+      const l = label(k.icon, 0.5, { bg: null, size: 80, pad: 4 }, hall.books);
+      l.position.set(Math.cos(a) * 1.4, 0.75, Math.sin(a) * 1.4);
+    });
+    label('📚 💊', 0.8, { bg: null, size: 90, pad: 4 }, hall.books).position.y = 1.9;
+    glow(0xffd23f, 2.6, hall.books).position.y = 1;
+  }
+  if (hall.books) hall.books.visible = want;
+}
+async function takeBooks() {
+  G.lock++;
+  await say(RX.story.door);
+  SFX.play('magic');
+  const f = hall.doors[11].front;
+  burst(new V3(f.x, 1.2, f.z), 0xffd23f, 50, 6);
+  team.forEach((t) => burst(t.obj.position.clone().add(new V3(0, 1.2, 0)), 0x7be3a6, 18, 3));
+  burst(P.pos.clone().setY(1.2), 0x7be3a6, 18, 3);
+  G.vitamins = true;
+  setEnergy(100);
+  SKILLS.forEach((k) => { G.skills[k.id] = (G.skills[k.id] || 0) + 1; });
+  renderSkills(); save();
+  showHallBooks();
+  refreshHallDoors();
+  toast('📚 💊 أخذ كل طالب كتابًا وفيتامينًا!', 'good', 3200);
+  await say(RX.story.taken);
+  G.lock--;
+  refreshTip();
 }
 async function enterRoom(i) {
   G.lock++;
@@ -1874,7 +2042,7 @@ async function enterRoom(i) {
   if (SC.rooms[i].id === 'spelling' && newWords()) G.cleared.delete('spelling');
   setupRoom(r);
   setArea('room');
-  G.camPitch = SC.rooms[i].theme === 'office' ? 0.1 : 0.42;
+  G.camPitch = SC.rooms[i].theme === 'office' && G.cleared.has('mongia') ? 0.1 : 0.42;
   placePlayer(r.exitFront.x, r.exitFront.z - 3.5, PI);
   await fade(false);
   G.lock--;
@@ -1889,6 +2057,7 @@ async function enterRoom(i) {
     r.seen = true;
     G.lock++;
     const c = roomPos(i);
+    if (!r.mongiaHere) { r.mongiaHere = charSprite('mongia', 1.7); r.mongiaHere.position.set(c.x + 2.6, 0, c.z - 4.5); (window.extraChars = window.extraChars || []).push(r.mongiaHere); }
     await camTo(new V3(c.x + 2, 3, c.z - 1), new V3(c.x, 1.4, c.z - 6), 1.2);
     SFX.play('magic'); burst(new V3(c.x, 2, c.z - 6), 0xffd23f, 50, 6);
     await say(RX.secret);
@@ -2258,7 +2427,7 @@ const STAGE_TIPS = {
   yard: () => C.tips.yard, yard2: () => C.tips.toLibrary,
   libA: () => G.pages < 5 ? C.tips.pages : C.tips.lectern,
   libB: () => C.tips.bridge, libC: () => C.tips.spell, rescued: () => C.tips.exit,
-  done: () => { const n = nextRoomName(); return n ? RX.tipNext.replace('{room}', n) : RX.tipAll; },
+  done: () => (allCleared() ? RX.tipAll : searchDone() ? (G.vitamins ? RX.tipBoss : RX.tipBooks) : G.kidnapped ? RX.tipSearch : RX.tipNext),
 };
 function refreshTip() { tip(P.hidden && G.stage === 'libA' ? C.tips.hide : (STAGE_TIPS[G.stage] || (() => ''))()); }
 
@@ -2452,7 +2621,7 @@ function startBridgeRound() {
   });
   setLabel(lib.board, `اللغز ${G.round + 1}: ${r.clue}`);
   lib.board.visible = true;
-  $('riddle').innerHTML = `<small>جسر الكلمات · لغز ${G.round + 1} من ${C.wordBridge.rounds.length}</small>${r.clue}`;
+  setRiddle(`جسر الكلمات · لغز ${G.round + 1} من ${C.wordBridge.rounds.length}`, r.clue);
   $('riddle').hidden = false;
   lastTile = null;
 }
@@ -2684,12 +2853,13 @@ const interactables = [
   { at: () => hall.backFront, r: 2.6, label: 'اخرج إلى الساحة', on: () => G.area === 'hall', act: exitToYard },
   { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'ارجع إلى الممر', on: () => G.area === 'room' && !(roomRun && roomRun.active), act: () => enterHall(G.room) },
   { at: () => rooms[G.room] && rooms[G.room].exitFront, r: 2.4, label: 'الباب مقفل حتى تهزم الوحش', on: () => G.area === 'room' && !!(roomRun && roomRun.active), act: async () => toast('لا تقلق! الخطأ لا يعاقبك. أكمل التحدي لتهزم الوحش.', 'bad', 2600) },
-  { at: () => rooms[11] && (rooms[11].talkAt || rooms[11].mongia.position), r: 3.4, label: 'تحدّث إلى ماما منجية', on: () => G.area === 'room' && G.room === 11, act: () => say(G.cleared.has('tests') ? RX.mongiaAfter : RX.mongiaBefore) },
+  { at: () => rooms[11] && (rooms[11].talkAt || rooms[11].mongia.position), r: 3.4, label: 'تحدّث إلى ماما منجية', on: () => G.area === 'room' && G.room === 11 && G.cleared.has('mongia'), act: () => say(RX.mongiaAfter) },
   { at: () => yard.doors[0].pos, r: 4.2, label: 'تحدّث إلى شتشوتة أولًا', on: () => G.stage === 'yard' && G.area === 'yard', act: async () => toast('شتشوتة تريد أن تخبرك شيئًا أولًا', 'bad') },
   { at: () => lib.lectern.position, r: 2.4, label: 'رتّب صفحات القصة', on: () => G.stage === 'libA' && G.pages >= 5 && G.area === 'library', act: solveStory },
   { at: () => lib.lectern.position, r: 2.4, label: 'منصة القراءة: اجمع الصفحات أولًا', on: () => G.stage === 'libA' && G.pages < 5 && G.area === 'library', act: async () => toast(`ما زالت ${5 - G.pages} صفحات مبعثرة`, 'bad') },
   { at: () => new V3(LX, 0, -30.5), r: 3, label: 'اخرج من باب النجاة', on: () => G.stage === 'rescued' && G.area === 'library', act: exitLibrary },
 ];
+interactables.push({ at: () => hall.doors && hall.doors[11] && hall.doors[11].front, r: 3.4, label: 'خذوا الكتب والفيتامينات', on: () => G.area === 'hall' && searchDone() && !G.vitamins, act: takeBooks });
 // أبواب الممر الثلاثة عشر
 for (let i = 0; i < 13; i++) {
   interactables.push({
@@ -2704,9 +2874,13 @@ for (let i = 0; i < 13; i++) {
       const st = roomState(i);
       if (st === 'locked') {
         if (SC.rooms[i].theme === 'secret') { toast(RX.secretLocked, 'bad', 2800); return; }
-        const k = RX.order.indexOf(SC.rooms[i].id);
-        const prev = k === 0 ? SC.rooms[0].name : SC.rooms.find((x) => x.id === RX.order[k - 1]).name;
-        toast(RX.lockedMsg.replace('{prev}', prev), 'bad', 2800); return;
+        if (SC.rooms[i].id === 'mongia') {
+          if (!G.kidnapped) toast('باب غرفة الأستاذة منجية مغلق الآن.', 'bad', 2800);
+          else if (!searchDone()) await say(RX.story.locked);
+          else toast(RX.tipBooks, 'bad', 2800);
+          return;
+        }
+        toast('هذه الغرفة مغلقة الآن. حرّروا زملاءكم الستة أولًا.', 'bad', 2800); return;
       }
       if (i === 0) { if (G.stage === 'done') { toast('المكتبة هادئة الآن... قِرطاس صار كتابًا لطيفًا', 'good', 2400); await homeworkGate('library'); } else await enterLibrary(); }
       else await enterRoom(i);
@@ -3094,7 +3268,7 @@ function startPlaying() {
   $('touch').hidden = !isTouch;
 }
 function resetProgress() {
-  G.stars.clear(); G.cleared.clear(); G.skills = {}; G.energy = 100; G.wordsDone = ''; renderSkills();
+  G.stars.clear(); G.cleared.clear(); G.skills = {}; G.energy = 100; G.wordsDone = ''; G.kidnapped = false; G.vitamins = false; renderSkills();
   team.length = 0; renderTeam();
   allStars().forEach((s) => { s.obj.visible = true; });
 }
@@ -3116,6 +3290,7 @@ async function continueGame(sv) {
   G.skills = sv.skills || {}; renderSkills();
   G.energy = sv.energy === undefined ? 100 : sv.energy;
   G.wordsDone = sv.wordsDone || '';
+  G.kidnapped = !!sv.kidnapped; G.vitamins = !!sv.vitamins;
   G.cleared = new Set(sv.cleared || []);
   setHero(sv.hero || 'boy');
   setPlayerName(sv.name || '');
@@ -3183,6 +3358,8 @@ function applyGrade(g) {
   const d = gradeData();
   C.story.pages = (d && d.library && d.library.pages) || BASE_CONTENT.pages;
   C.wordBridge.rounds = (d && d.library && d.library.rounds) || BASE_CONTENT.rounds;
+  const lib2 = HW.custom(g, 'library');
+  if (lib2) { if (lib2.pages) C.story.pages = lib2.pages; if (lib2.rounds) C.wordBridge.rounds = lib2.rounds; }
   for (const id in RC) RC[id].steps = (d && d[id] && d[id].steps) || BASE_CONTENT.steps[id];
   $('btnGrade').textContent = '📚 الصف ' + GRADE_NAMES[g - 1] + ' · تغيير الصف';
   save();
@@ -3220,7 +3397,7 @@ $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameG
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
 $('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
 $('btnAsk').onclick = () => { askFriend(); $('btnAsk').blur(); };
-HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), name: () => G.name || '', onTimeout: () => hurtHero(25) });
+HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', onTimeout: () => hurtHero(25) });
 $('btnPauseHw').onclick = () => HW.openList();
 $('btnHelp').onclick = () => { $('help').hidden = false; };
 $('btnHelpClose').onclick = () => { $('help').hidden = true; };

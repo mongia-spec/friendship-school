@@ -1,7 +1,7 @@
 {
  "intro-0": [
   "narrator",
-  "1793199823587"
+  "1793371638844"
  ],
  "intro-1": [
   "shtshout",
@@ -292,20 +292,20 @@
   "1793229153592"
  ],
  "rooms-tests-intro-1": [
-  "mongia",
-  "1793229159556"
+  "shtshouta",
+  "1793371616623"
  ],
  "rooms-tests-intro-2": [
   "shtshout",
-  "1793229164615"
+  "1793371622472"
  ],
  "rooms-tests-win-0": [
   "monster",
   "1793229169411"
  ],
  "rooms-tests-win-1": [
-  "mongia",
-  "1793229173339"
+  "shtshouta",
+  "1793371627810"
  ],
  "rooms-tests-win-2": [
   "shtshout",
@@ -345,7 +345,7 @@
  ],
  "roomsx-secret-3": [
   "mongia",
-  "1793229245193"
+  "1793371633566"
  ],
  "g1-listen-listening-0": [
   "narrator",
@@ -550,5 +550,69 @@
  "warn-5": [
   "shtshout",
   "1793364470742"
+ ],
+ "roomsx-story-kidnap-0": [
+  "monster",
+  "1793371539805"
+ ],
+ "roomsx-story-kidnap-1": [
+  "monster",
+  "1793371546415"
+ ],
+ "roomsx-story-kidnap-2": [
+  "shtshouta",
+  "1793371550043"
+ ],
+ "roomsx-story-kidnap-3": [
+  "shtshout",
+  "1793371553991"
+ ],
+ "roomsx-story-locked-0": [
+  "shtshout",
+  "1793371558292"
+ ],
+ "roomsx-story-notHere-0": [
+  "shtshouta",
+  "1793371562650"
+ ],
+ "roomsx-story-searched-0": [
+  "shtshout",
+  "1793371566749"
+ ],
+ "roomsx-story-door-0": [
+  "shtshouta",
+  "1793371571856"
+ ],
+ "roomsx-story-taken-0": [
+  "shtshout",
+  "1793371576583"
+ ],
+ "rooms-mongia-intro-0": [
+  "monster",
+  "1793371581946"
+ ],
+ "rooms-mongia-intro-1": [
+  "monster",
+  "1793371587556"
+ ],
+ "rooms-mongia-intro-2": [
+  "mongia",
+  "1793371592996"
+ ],
+ "rooms-mongia-win-0": [
+  "monster",
+  "1793371596754"
+ ],
+ "rooms-mongia-win-1": [
+  "mongia",
+  "1793371601223"
+ ],
+ "rooms-mongia-win-2": [
+  "narrator",
+  "1793371606413"
+ ],
+ "rooms-mongia-win-3": [
+  "narrator",
+  "1793371610889"
  ]
 }
