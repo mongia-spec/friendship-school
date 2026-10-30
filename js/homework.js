@@ -133,6 +133,7 @@
     return added;
   }
 
+  const say = (t) => (ctx.gt ? ctx.gt(t) : t);
   const pendingItems = () => items.filter((x) => !x.status);
   const pending = (roomId) => items.some((x) => x.room === roomId && !x.status);
   const STATUS = { answered: 'حللتَ الواجب ✅', paper: 'ستسلّمه ورقيًا لمعلمك ✅' };
@@ -170,7 +171,7 @@
       const b = document.createElement('button');
       b.className = 'hw-row-item';
       const main = document.createElement('b'); main.textContent = it.title;
-      const sub = document.createElement('small'); sub.textContent = `${roomName(it.room)} · ${it.status ? STATUS[it.status] : 'لم يُحلّ بعد'}`;
+      const sub = document.createElement('small'); sub.textContent = `${roomName(it.room)} · ${it.status ? say(STATUS[it.status]) : 'لم يُحلّ بعد'}`;
       b.append(main, sub);
       b.onclick = () => openView(it, null);
       box.appendChild(b);
@@ -216,10 +217,10 @@
     function refresh() {
       const c = filled(), all = c === it.n;
       $('hwFinish').disabled = !all;
-      $('hwFinish').textContent = all ? '✅ أنهيتُ الواجب' : `أجبتَ عن ${c} من ${it.n}`;
+      $('hwFinish').textContent = all ? '✅ أنهيتُ الواجب' : say(`أجبتَ عن ${c} من ${it.n}`);
       $('hwSend').disabled = !all;
       $('hwSaveAns').disabled = !all;
-      $('hwState').textContent = it.status ? STATUS[it.status] : '';
+      $('hwState').textContent = it.status ? say(STATUS[it.status]) : '';
       $('hwDone').disabled = !!onDone && !it.status;
       $('hwDone').textContent = onDone ? '⚔️ الضربة الأخيرة للوحش' : 'رجوع إلى واجباتي';
     }
@@ -241,7 +242,7 @@
           it.late = (it.late || 0) + 1;
           left = Math.ceil(it.mins * 30);
           ctx.onTimeout();
-          $('hwState').textContent = '⏰ انتهى الوقت فضعف بطلك! لديك وقت إضافي، أكمل واجبك.';
+          $('hwState').textContent = say('⏰ انتهى الوقت فضعف بطلك! لديك وقت إضافي، أكمل واجبك.');
         }
         save(); show();
       }, 500);

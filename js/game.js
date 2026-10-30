@@ -30,6 +30,50 @@ function save() {
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, kidnapped: G.kidnapped, vitamins: G.vitamins, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
 }
 
+// خطاب البنت: كل ما تقرؤه اللاعبة موجّهًا إليها يتحول إلى المؤنث إذا اختارت البطلة
+const GIRL_PHRASES = [
+  ['أنت مختبئ', 'أنتِ مختبئة'], ['بطلك منهك', 'بطلتكِ منهكة'], ['فضعف بطلك', 'فضعفت بطلتكِ'], ['صار بطلك أقوى', 'صارت بطلتكِ أقوى'], ['بطلك', 'بطلتكِ'],
+  ['بطلٌ جديد', 'بطلةٌ جديدةٌ'], ['يا بطل', 'يا بطلة'],
+];
+const GIRL_WORDS = { تستطيع: 'تستطيعين', أنقذتَ: 'أنقذتِ', جمعتَ: 'جمعتِ', حللتَ: 'حللتِ', أجبتَ: 'أجبتِ', أحسنت: 'أحسنتِ', اجتهدت: 'اجتهدتِ', حرّرته: 'حرّرتِه', تعلّمته: 'تعلّمتِه', أمسكك: 'أمسككِ', هاجمك: 'هاجمكِ', يراك: 'يراكِ', بعودتك: 'بعودتكِ', صفحاتك: 'صفحاتكِ', زملاءك: 'زملاءكِ', صديقك: 'صديقكِ', زميلك: 'زميلكِ', زميلًا: 'زميلًا', معلمك: 'معلمكِ', معلمتك: 'معلمتكِ', ستنصحك: 'ستنصحكِ', واجبك: 'واجبكِ', حلّك: 'حلّكِ', مهارتك: 'مهارتكِ', لديك: 'لديكِ', عندك: 'عندكِ', عينيك: 'عينيكِ', سرّك: 'سرّكِ', لك: 'لكِ', مستواك: 'مستواكِ', اسمك: 'اسمكِ', أنت: 'أنتِ', تقلق: 'تقلقي', تتعجّل: 'تتعجّلي', تحب: 'تحبّين', تجمعها: 'تجمعينها', عُد: 'عودي', خذ: 'خذي', افتح: 'افتحي', ركّز: 'ركّزي', تحدّث: 'تحدّثي', اضغط: 'اضغطي', اقفز: 'اقفزي', اجمع: 'اجمعي', اخرج: 'اخرجي', ادخل: 'ادخلي', اذهب: 'اذهبي', اقرأ: 'اقرئي', قف: 'قفي', فكّر: 'فكّري', حاول: 'حاولي', جرّب: 'جرّبي', انتبه: 'انتبهي', أسرع: 'أسرعي', أكمل: 'أكملي', اكتب: 'اكتبي', اسأل: 'اسألي', اسحب: 'اسحبي', احفظ: 'احفظي', كرّرها: 'كرّريها', كرّر: 'كرّري', رتّب: 'رتّبي', اختر: 'اختاري', أعد: 'أعيدي', انظر: 'انظري', ابحث: 'ابحثي', أغمض: 'أغمضي', ابدأ: 'ابدئي', تخيّل: 'تخيّلي', تذكّر: 'تذكّري', حلّ: 'حلّي', الصق: 'الصقي', نزّل: 'نزّلي', أرسل: 'أرسلي', اطلب: 'اطلبي', سلّمه: 'سلّميه' };
+const GIRL_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL_WORDS).sort((a, b) => b.length - a.length).join('|') + ')(?![\\u0621-\\u0652])', 'g');
+// لا نغيّر ما بين « » لأنه أمثلة ونصوص مقتبسة
+function outsideQuotes(text, fn) { return String(text).split(/(«[^»]*»)/).map((p, i) => (i % 2 ? p : fn(p))).join(''); }
+function gt(text) {
+  if (G.hero !== 'girl' || !text) return text;
+  return outsideQuotes(text, (p) => {
+    GIRL_PHRASES.forEach(([m, f]) => { p = p.split(m).join(f); });
+    return p.replace(GIRL_RE, (all, pre, w) => pre + GIRL_WORDS[w]);
+  });
+}
+// في الأسئلة نحوّل الفعل الأول فقط وأفعال المواقف، حتى لا يتغير مثال نحوي داخل السؤال
+const GIRL_STEMS = { رتّب: 'رتّبي', 'رَتِّبِ': 'رَتِّبِي', 'رَتِّبْ': 'رَتِّبِي', أكمل: 'أكملي', 'أَكْمِلْ': 'أَكْمِلِي', 'أَكْمِلِ': 'أَكْمِلِي', اختر: 'اختاري', أعد: 'أعيدي', اقرأ: 'اقرئي' };
+const GIRL_SITUATION = { تأخّرتَ: 'تأخّرتِ', أنهيتَ: 'أنهيتِ', وجدتَ: 'وجدتِ', حصلتَ: 'حصلتِ', شعرتَ: 'شعرتِ', 'سَمِعْتَ': 'سَمِعْتِ', 'دَخَلْتَ': 'دَخَلْتِ', 'أَخَذْتَ': 'أَخَذْتِ', 'تَعَلَّمْتَ': 'تَعَلَّمْتِ', 'أَخْطَأْتَ': 'أَخْطَأْتِ', 'وَجَدْتَ': 'وَجَدْتِ', 'فَهِمْتَ': 'فَهِمْتِ', 'أَنْهَيْتَ': 'أَنْهَيْتِ', 'رَأَيْتَ': 'رَأَيْتِ', 'كَسَرْتَ': 'كَسَرْتِ', 'أَنْتَ': 'أَنْتِ', تولّيت: 'تولّيتِ', عندك: 'عندكِ', لديك: 'لديكِ', زميلك: 'زميلكِ', تريد: 'تريدين', 'تُرِيدُ': 'تُرِيدِينَ', تشعر: 'تشعرين', تؤجّل: 'تؤجّلين', تقضي: 'تقضين', تستعين: 'تستعينين' };
+const GIRL_QUESTIONS = [['ماذا تفعل', 'ماذا تفعلين'], ['ماذا تقول', 'ماذا تقولين'], ['ماذا تقصد', 'ماذا تقصدين'], ['ماذا تحمل', 'ماذا تحملين'], ['كيف تردّ', 'كيف تردّين'], ['كيف تراجعها', 'كيف تراجعينها'], ['كيف تراجع', 'كيف تراجعين'], ['كيف تقرأ', 'كيف تقرئين'], ['كيف تدوّن', 'كيف تدوّنين'], ['كيف تتصرّف', 'كيف تتصرّفين'], ['كيف تختبر', 'كيف تختبرين'], ['كيف تتحقّق', 'كيف تتحقّقين'], ['كيف تدرسه', 'كيف تدرسينه'], ['كيف تجعله', 'كيف تجعلينه'], ['متى تبدأ', 'متى تبدئين'], ['متى تحلّه', 'متى تحلّينه'], ['متى تأكل', 'متى تأكلين'], ['أن تجيب', 'أن تجيبي'], ['أن تستعير', 'أن تستعيري'], ['أن تقترح', 'أن تقترحي'], ['لتكوّن', 'لتكوّني'], ['لا توافق', 'لا توافقين']];
+const SIT_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL_SITUATION).join('|') + ')(?![\\u0621-\\u0652])', 'g');
+function gq(text) {
+  if (G.hero !== 'girl' || !text) return text;
+  const t = String(text), first = t.split(/\s+/)[0].replace(/[:،]$/, '');
+  const head = GIRL_STEMS[first] ? GIRL_STEMS[first] + t.slice(first.length) : t;
+  return outsideQuotes(head, (p) => {
+    GIRL_QUESTIONS.forEach(([m, f]) => { p = p.replace(new RegExp(m + '(?![\\u0621-\\u0652])', 'g'), f); });
+    return p.replace(SIT_RE, (all, pre, w) => pre + GIRL_SITUATION[w]);
+  });
+}
+const qText = (st, key = 'q') => (st.custom ? st[key] : gq(st[key]));
+const GIRL_STATIC = ['#help', '#pause', '#skills', '#namePick', '#gradePick', '#keysHint', '#hwList', '#hwView', '#fightBar'];
+const staticOrig = new Map();
+function applyGirlStatic() {
+  GIRL_STATIC.forEach((sel) => {
+    const walk = document.createTreeWalker($(sel.slice(1)), NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (!n.nodeValue.trim() || n.parentElement.closest('#hwText,#hwNums,#hwRows')) continue;
+      if (!staticOrig.has(n)) staticOrig.set(n, n.nodeValue);
+      n.nodeValue = gt(staticOrig.get(n));
+    }
+  });
+}
+
 /* ---------------- المحرك ---------------- */
 const canvas = $('view');
 function makeRenderer() {
@@ -399,6 +443,7 @@ function makePlayer(hero = 'boy') {
   return { g, hipL, hipR, shL, shR, torso, head, marker, hero };
 }
 function setHero(hero) {
+  setTimeout(applyGirlStatic, 0);
   G.hero = hero;
   if (player && player.hero === hero) return;
   const old = player;
@@ -1345,7 +1390,7 @@ function riddleText(text) {
   setRiddle(`${rr.r.data.monster.name} · ${RX.step.replace('{n}', Math.min(rr.total, rr.done + 1)).replace('{total}', rr.total)}`, text);
   $('riddle').hidden = false;
 }
-const wrongMsg = () => RX.wrong[Math.random() * RX.wrong.length | 0];
+const wrongMsg = () => gt(RX.wrong[Math.random() * RX.wrong.length | 0]);
 function hitMonster() {
   const rr = roomRun, m = rr.r.monster;
   gainSkill(rr.r.room.id);
@@ -1422,7 +1467,7 @@ function hurtHero(n = 10) {
 const warnVoice = new Audio();
 let warnAt = 0;
 function warnHero(id) {
-  const src = VOICES[id], now = performance.now();
+  const src = VOICES[G.hero === 'girl' && VOICES[id + '-f'] ? id + '-f' : id], now = performance.now();
   if (!src || now - warnAt < 8000 || !$('dialog').hidden || G.paused) return;
   if (!$('quiz').hidden && !$('quizListen').hidden) return;     // لا نغطي على مقطع الاستماع
   warnAt = now;
@@ -1489,7 +1534,7 @@ function stepTiles(st) {
     };
     rr.layout();
     rr.chaseOn = !!rr.chase; rr.chaseWait = 3.5;
-    riddleText(st.q + ' ← قف على الجواب');
+    riddleText(qText(st) + gt(' ← قف على الجواب'));
     let wrongHere = 0;
     rr.onTile = (t) => {
       if (t.word === st.answer) {
@@ -1527,7 +1572,7 @@ function openQuiz(st, title, listenId) {
     G.lock++;
     const opts = $('quizOpts'), fb = $('quizFb');
     $('quizTitle').textContent = title;
-    $('quizQ').textContent = st.q;
+    $('quizQ').textContent = qText(st);
     fb.textContent = '';
     let wrongHere = 0;
     const lb = $('quizListen');
@@ -1543,14 +1588,14 @@ function openQuiz(st, title, listenId) {
       b.className = 'page-card'; b.textContent = o;
       b.onclick = () => {
         if (o === st.answer) {
-          b.classList.add('ok'); fb.style.color = '#2bb673'; fb.textContent = 'أحسنت! 🎉'; SFX.play('good');
+          b.classList.add('ok'); fb.style.color = '#2bb673'; fb.textContent = gt('أحسنت! 🎉'); SFX.play('good');
           opts.querySelectorAll('button').forEach((x) => { x.disabled = true; });
           setTimeout(() => { $('quiz').hidden = true; G.lock--; resolve(); }, 1000);
         } else {
           b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 500);
           missMonster(); wrongHere++;
           fb.style.color = '#ff6b6b';
-          fb.textContent = wrongMsg() + (wrongHere >= 2 && roomRun ? ' ' + roomRun.r.data.hint : '');
+          fb.textContent = wrongMsg() + (wrongHere >= 2 && roomRun ? ' ' + gt(roomRun.r.data.hint) : '');
         }
       };
       opts.appendChild(b);
@@ -1563,7 +1608,7 @@ async function stepMemory(st, title) {
   G.lock++;
   $('quizTitle').textContent = title;
   $('quizListen').hidden = true;
-  $('quizQ').textContent = 'احفظ هذه الكلمات بالترتيب! كرّرها في سرّك.';
+  $('quizQ').textContent = gt('احفظ هذه الكلمات بالترتيب! كرّرها في سرّك.');
   const memBox = document.createElement('div'); memBox.className = 'quiz-mem';
   st.items.forEach((x) => { const sp = document.createElement('span'); sp.textContent = x; memBox.appendChild(sp); });
   $('quizOpts').replaceChildren(memBox);
@@ -1586,7 +1631,7 @@ function stepCollect(st) {
       glow(0xffd23f, 2.4, g);
       return { g, it, done: false, busy: false };
     });
-    riddleText(`اجمع مفاتيح المعرفة 🔑 ${got} من ${st.items.length}`);
+    riddleText(gt(`اجمع مفاتيح المعرفة 🔑 ${got} من ${st.items.length}`));
     rr.chaseOn = true; rr.chaseWait = 3.5;
     rr.onKey = async (key) => {
       key.busy = true;
@@ -1597,7 +1642,7 @@ function stepCollect(st) {
       key.done = true; key.g.visible = false; got++;
       burst(key.g.position, 0xffd23f, 20, 4);
       hitMonster();
-      riddleText(`اجمع مفاتيح المعرفة 🔑 ${got} من ${st.items.length}`);
+      riddleText(gt(`اجمع مفاتيح المعرفة 🔑 ${got} من ${st.items.length}`));
       if (got >= st.items.length) { rr.onKey = null; res(); }
     };
   });
@@ -1711,7 +1756,7 @@ async function startRoomFight(r) {
     else {
       $('riddle').hidden = true;
       startAttack(attackSeconds(st));
-      if (st.type === 'order') await openOrder({ title: st.title, hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: d.hint });
+      if (st.type === 'order') await openOrder({ title: qText(st, 'title'), hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: gt(d.hint) });
       else if (st.type === 'choose') await openQuiz(st, title, st.custom ? 'custom' : listenId(r.room.id, k));
       else if (st.type === 'memory') { stopAttack(); await stepMemory(st, title); }
       stopAttack();
@@ -2216,10 +2261,11 @@ function nextLine() {
   por.innerHTML = '';
   if (sp.img) { const im = new Image(); im.src = S[sp.img].src; im.alt = C.names[line.who]; por.appendChild(im); }
   else { const d = document.createElement('div'); d.className = 'ph-face'; d.style.background = sp.bg; d.textContent = sp.face; por.appendChild(d); }
-  dlg.full = line.text; dlg.shown = 0; dlg.lineAt = performance.now();
+  const fem = G.hero === 'girl';
+  dlg.full = (fem && line.textF) || line.text; dlg.shown = 0; dlg.lineAt = performance.now();
   clearInterval(dlg.timer); clearTimeout(dlg.autoT);
   $('dlgText').textContent = '';
-  const src = VOICES[line.id];
+  const src = VOICES[fem && VOICES[line.id + '-f'] ? line.id + '-f' : line.id];
   if (src && !SFX.muted) playVoice(src);
   else showText();
 }
@@ -2340,7 +2386,7 @@ function toast(text, kind = 'good', ms = 1800) {
   clearTimeout(toastT); toastT = setTimeout(() => { t.className = ''; }, ms);
 }
 // التعليمات تذكر الزر المطلوب: على الحاسوب المفتاح، وعلى الهاتف زر الشاشة
-const withKeys = (text) => { const t = String(text || '').replace(/اقفز/, isTouch ? 'اقفز (اضغط زر «قفز»)' : 'اقفز (اضغط مفتاح المسافة)'); return isTouch ? t.replace(/اضغط E/, 'اضغط زر «تفاعل»').replace(/بالأسهم أو WASD/, 'بعصا التحكم') : t; };
+const withKeys = (text) => { const t = gt(String(text || '')).replace(/اقفزي?/, G.hero === 'girl' ? (isTouch ? 'اقفزي (اضغطي زر «قفز»)' : 'اقفزي (اضغطي مفتاح المسافة)') : (isTouch ? 'اقفز (اضغط زر «قفز»)' : 'اقفز (اضغط مفتاح المسافة)')); return isTouch ? t.replace(/اضغطي? E/, G.hero === 'girl' ? 'اضغطي زر «تفاعل»' : 'اضغط زر «تفاعل»').replace(/بالأسهم أو WASD/, 'بعصا التحكم') : t; };
 function tip(text) { $('tip').textContent = withKeys(text); }
 function setHealth(h) {
   G.health = Math.max(0, h);
@@ -2403,7 +2449,7 @@ function openOrder(o = {}) {
       placed.forEach((i, k) => { if (i === k || (o.items && o.items[i] === o.items[k])) locked[k] = true; else wrong++; });
       render();
       if (!wrong) {
-        fb.textContent = 'أحسنت! القصة مرتّبة. 🎉'; fb.style.color = '#2bb673';
+        fb.textContent = gt('أحسنت! القصة مرتّبة. 🎉'); fb.style.color = '#2bb673';
         SFX.play('good');
         setTimeout(() => { panel.hidden = true; G.lock--; resolve(tries); }, 1300);
         return;
@@ -2829,9 +2875,9 @@ async function exitLibrary() {
 function showEnd(card = C.endCard) {
   G.playing = false;
   $('hud').classList.add('hidden'); $('touch').hidden = true;
-  $('endTitle').textContent = card.title;
-  $('endLine').textContent = card.line;
-  $('endNext').textContent = card.next;
+  $('endTitle').textContent = gt(card.title);
+  $('endLine').textContent = gt(card.line);
+  $('endNext').textContent = gt(card.next);
   $('endStats').textContent = `نقاط مهاراتك: ${skillPoints()} · مستوى بطلك: ${powerLevel()} · الفريق: ${team.map((t) => t.name).join('، ')}`;
   const cast = $('endCast');
   cast.innerHTML = '';
@@ -3188,7 +3234,7 @@ function updateInteract() {
   const pr = $('prompt');
   if (currentInteract) {
     pr.hidden = false;
-    pr.innerHTML = isTouch ? `اضغط «تفاعل»: ${currentInteract.label}` : `اضغط <kbd>E</kbd>: ${currentInteract.label}`;
+    pr.innerHTML = isTouch ? `${gt('اضغط')} «تفاعل»: ${gt(currentInteract.label)}` : `${gt('اضغط')} <kbd>E</kbd>: ${gt(currentInteract.label)}`;
   } else pr.hidden = true;
   // الدخول بالمشي إلى الباب مباشرة، دون الحاجة إلى زر
   if (G.lock === 0 && !G.busy && (G.stage === 'yard2' || G.stage === 'done') && G.area === 'yard' && P.pos.z < -22.4 && Math.abs(P.pos.x) < 2.2) { G.busy = true; enterHall().then(() => { G.busy = false; }); }
@@ -3338,7 +3384,7 @@ function renderSkills() {
     const lv = skillLevel(k.id);
     return '<div class="skill-row"><span class="skill-ic">' + k.icon + '</span><b>' + k.name + '</b><div class="skill-bar"><i style="width:' + lv * 20 + '%;background:' + k.color + '"></i></div><small>' + '★'.repeat(lv) + '☆'.repeat(5 - lv) + '</small></div>';
   }).join('');
-  $('skillsLevel').textContent = 'مستوى بطلك: ' + powerLevel() + ' من 5 · مجموع النقاط: ' + skillPoints();
+  $('skillsLevel').textContent = gt('مستوى بطلك: ') + powerLevel() + ' من 5 · مجموع النقاط: ' + skillPoints();
 }
 $('hudStars').onclick = () => { renderSkills(); $('skills').hidden = false; G.paused = true; };
 $('skillsClose').onclick = () => { $('skills').hidden = true; G.paused = false; };
@@ -3397,7 +3443,7 @@ $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameG
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
 $('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
 $('btnAsk').onclick = () => { askFriend(); $('btnAsk').blur(); };
-HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', onTimeout: () => hurtHero(25) });
+HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', gt, onTimeout: () => hurtHero(25) });
 $('btnPauseHw').onclick = () => HW.openList();
 $('btnHelp').onclick = () => { $('help').hidden = false; };
 $('btnHelpClose').onclick = () => { $('help').hidden = true; };

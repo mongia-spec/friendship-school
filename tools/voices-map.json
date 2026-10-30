@@ -37,7 +37,7 @@
  ],
  "yardTalk-0": [
   "shtshouta",
-  "1793377443403"
+  "1793378077840"
  ],
  "yardTalk-1": [
   "shtshout",
@@ -614,5 +614,89 @@
  "rooms-mongia-win-3": [
   "narrator",
   "1793371610889"
+ ],
+ "intro-8-f": [
+  "shtshouta",
+  "1793378082965"
+ ],
+ "yardTalk-0-f": [
+  "shtshouta",
+  "1793378087616"
+ ],
+ "yardTalk-1-f": [
+  "shtshout",
+  "1793378092067"
+ ],
+ "yardTalk-3-f": [
+  "shtshouta",
+  "1793378095645"
+ ],
+ "libraryEnter-3-f": [
+  "shtshouta",
+  "1793378100274"
+ ],
+ "wordBridge-intro-0-f": [
+  "shtshouta",
+  "1793378104240"
+ ],
+ "wordBridge-intro-1-f": [
+  "shtshout",
+  "1793378108945"
+ ],
+ "spell-intro-0-f": [
+  "shtshouta",
+  "1793378114187"
+ ],
+ "spell-intro-1-f": [
+  "shtshouta",
+  "1793378118380"
+ ],
+ "rescue-2-f": [
+  "shtshout",
+  "1793378123022"
+ ],
+ "rooms-spelling-intro-1-f": [
+  "shtshouta",
+  "1793378126916"
+ ],
+ "rooms-listening-intro-1-f": [
+  "shtshouta",
+  "1793378131381"
+ ],
+ "rooms-vocab-intro-1-f": [
+  "shtshouta",
+  "1793378136399"
+ ],
+ "rooms-memory-intro-1-f": [
+  "shtshouta",
+  "1793378141086"
+ ],
+ "rooms-review-intro-1-f": [
+  "shtshouta",
+  "1793378147148"
+ ],
+ "warn-0-f": [
+  "shtshouta",
+  "1793378150845"
+ ],
+ "warn-1-f": [
+  "shtshout",
+  "1793378154259"
+ ],
+ "warn-2-f": [
+  "shtshouta",
+  "1793378157030"
+ ],
+ "warn-3-f": [
+  "shtshout",
+  "1793378161039"
+ ],
+ "warn-4-f": [
+  "shtshouta",
+  "1793378165195"
+ ],
+ "warn-5-f": [
+  "shtshout",
+  "1793378169532"
  ]
 }
