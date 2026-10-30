@@ -37,7 +37,7 @@ function makeRenderer() {
   catch (e) {
     // المتصفح رفض الرسوم ثلاثية الأبعاد: نخبر التلميذ بدل أن تبقى شاشة التحميل بلا نهاية
     $('loading').querySelector('.spinner').style.display = 'none';
-    $('loading').querySelector('p').textContent = 'تعذّر تشغيل الرسوم ثلاثية الأبعاد في هذا المتصفح. أغلقي المتصفح تمامًا وافتحيه من جديد، أو جرّبي متصفحًا آخر.';
+    $('loading').querySelector('p').textContent = 'تعذّر تشغيل الرسوم ثلاثية الأبعاد في هذا المتصفح. يُرجى إغلاق المتصفح تمامًا وفتحه من جديد، أو تجربة متصفح آخر.';
     throw e;
   }
 }
@@ -2945,6 +2945,18 @@ $('btnPauseHelp').onclick = () => { $('help').hidden = false; };
 $('btnRestart').onclick = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
 $('btnReplay').onclick = () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* */ } location.reload(); };
 $('btnMute').onclick = () => { SFX.init(); const on = SFX.toggle(); $('btnMute').textContent = on ? '🔊' : '🔇'; voice.muted = !on; };
+// زر الشاشة الكاملة: يظهر فقط حيث يسمح المتصفح بها (لا يدعمها الآيفون)
+const fsRoot = document.documentElement;
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+if (document.fullscreenEnabled || document.webkitFullscreenEnabled) $('btnFull').hidden = false;
+$('btnFull').onclick = () => {
+  $('btnFull').blur();   // حتى لا تضغطه المسافة (القفز) مرة أخرى
+  if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else (fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen).call(fsRoot);
+};
+const fsLabel = () => { const on = !!fsElement(), t = on ? 'خروج من الشاشة الكاملة' : 'شاشة كاملة'; $('btnFull').title = t; $('btnFull').setAttribute('aria-label', t); };
+document.addEventListener('fullscreenchange', fsLabel);
+document.addEventListener('webkitfullscreenchange', fsLabel);
 
 /* ---------------- التشغيل ---------------- */
 async function boot() {

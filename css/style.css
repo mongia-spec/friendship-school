@@ -183,3 +183,5 @@ body.touch #prompt { bottom: 300px; }
 #owner { position: fixed; left: 50%; bottom: 4px; transform: translateX(-50%); z-index: 90; pointer-events: none; font-size: 12px; font-weight: 700; color: #fff; background: rgba(27,20,64,.55); padding: 3px 12px; border-radius: 999px; white-space: nowrap; text-shadow: 0 1px 2px #000; }
 @media (max-width: 600px) { #owner { font-size: 10px; } }
 body.touch #owner { bottom: auto; top: 4px; }
+#btnFull { position: fixed; top: 64px; left: 12px; z-index: 90; color: var(--violet-d); font-weight: 900; }
+#btnFull[hidden] { display: none; }
