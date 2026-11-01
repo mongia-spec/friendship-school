@@ -28,7 +28,7 @@ function loadSave() {
 }
 function save() {
   if (G.preview || G.picking) return;   // تجربة المعلم واختيار البطل قبل البدء لا يغيّران اللعب المحفوظ
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, kidnapped: G.kidnapped, vitamins: G.vitamins, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name })); } catch (e) { /* لا شيء */ }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: G.stage, stars: [...G.stars], skills: G.skills, energy: G.energy, wordsDone: G.wordsDone, kidnapped: G.kidnapped, vitamins: G.vitamins, cleared: [...G.cleared], hero: G.hero, grade: G.grade, name: G.name, place: G.place })); } catch (e) { /* لا شيء */ }
 }
 
 // خطاب البنت: كل ما تقرؤه اللاعبة موجّهًا إليها يتحول إلى المؤنث إذا اختارت البطلة
@@ -1759,7 +1759,7 @@ async function startRoomFight(r) {
     else {
       $('riddle').hidden = true;
       startAttack(attackSeconds(st));
-      if (st.type === 'order') await openOrder({ alts: st.alts, title: qText(st, 'title'), hint: d.goal, items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: gt(d.hint) });
+      if (st.type === 'order') await openOrder({ alts: st.alts, title: qText(st, 'title'), howto: true, hint: 'اضغط القطع واحدة بعد أخرى بالترتيب الصحيح، ثم اضغط «تحقّق من الترتيب»', items: st.items, poolH: 'القطع المبعثرة', slotsH: 'بالترتيب الصحيح', hint2: gt(d.hint) });
       else if (st.type === 'choose') await openQuiz(st, title, st.custom ? 'custom' : listenId(r.room.id, k));
       else if (st.type === 'memory') { stopAttack(); await stepMemory(st, title); }
       stopAttack();
@@ -2009,6 +2009,7 @@ function updateRoom(dt) {
 
 async function enterHall(fromRoom = null) {
   G.lock++;
+  G.place = 'hall'; save();   // «متابعة» تعود إلى المكان الذي توقف فيه اللاعب
   G.camPitch = 0.42;
   tip('');
   SFX.play('door');
@@ -2088,6 +2089,7 @@ async function enterRoom(i) {
   await fade(true);
   const r = buildRoom(i);
   G.room = i;
+  G.place = i; save();
   if (SC.rooms[i].id === 'spelling' && newWords()) G.cleared.delete('spelling');
   setupRoom(r);
   setArea('room');
@@ -2417,6 +2419,9 @@ function openOrder(o = {}) {
     $('orderSlotsH').textContent = o.slotsH || 'القصة بالترتيب';
     const pages = o.items || C.story.pages;
     panel.classList.toggle('short', !!o.items);
+    $('orderHint').classList.toggle('howto', !!o.howto);
+    // حروف الكلمة تظهر كبيرة في صف واحد لتُقرأ على السبورة
+    panel.classList.toggle('letters', !!o.items && pages.every((p) => [...p.replace(/[\u064B-\u0652]/g, '')].length <= 2));
     let order = pages.map((_, i) => i);
     do shuffle(order); while (order.every((v, i) => v === i));
     const placed = new Array(pages.length).fill(null);
@@ -2429,6 +2434,8 @@ function openOrder(o = {}) {
     };
     function render() {
       pool.innerHTML = ''; slots.innerHTML = '';
+      pool.classList.toggle('nudge', placed.every((v) => v === null));
+      $('orderCheck').classList.toggle('ready', !placed.includes(null));
       order.filter((i) => !placed.includes(i)).forEach((i) => {
         const b = card(i);
         b.onclick = () => { const k = placed.indexOf(null); if (k >= 0) { placed[k] = i; SFX.play('page'); render(); } };
@@ -3406,6 +3413,12 @@ async function continueGame(sv) {
   await fade(false);
   refreshTip();
   toast('أهلًا بعودتك! أكمل من آخر نقطة', 'good');
+  // العودة إلى الممر أو الغرفة التي توقف فيها اللاعب، لا إلى الساحة
+  if (!inLib && (G.stage === 'done' || G.stage === 'yard2') && sv.place !== undefined && sv.place !== null) {
+    const inRoom = typeof sv.place === 'number' && SC.rooms[sv.place];
+    await enterHall(inRoom ? sv.place : null);
+    if (inRoom) await enterRoom(sv.place);
+  }
 }
 // لوحة «مهاراتي»: شريط ونجوم لكل مهارة
 function renderSkills() {
@@ -3497,6 +3510,13 @@ $('btnPauseHelp').onclick = () => { $('help').hidden = false; };
 $('btnRestart').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
 $('btnReplay').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* */ } location.reload(); };
 $('btnMute').onclick = () => { SFX.init(); const on = SFX.toggle(); $('btnMute').textContent = on ? '🔊' : '🔇'; voice.muted = !on; };
+// أثناء الترتيب تتوقف الحركة: نوضح لمن يضغط الأسهم أن الجواب بالضغط على القطع
+window.addEventListener('keydown', (e) => {
+  if ($('order').hidden || !/^(Arrow|Key[WASD]$|Space$)/.test(e.code)) return;
+  const fb = $('orderFb');
+  fb.textContent = gt('البطل ينتظرك هنا: اضغط القطع بالفأرة أو بالإصبع.'); fb.style.color = '#6d3fd6';
+  $('orderPool').classList.remove('nudge'); void $('orderPool').offsetWidth; $('orderPool').classList.add('nudge');
+});
 // زر الشاشة الكاملة: يظهر فقط حيث يسمح المتصفح بها (لا يدعمها الآيفون)
 const fsRoot = document.documentElement;
 const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;

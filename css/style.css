@@ -242,3 +242,16 @@ body.touch #btnFull { top: auto; bottom: 8px; left: 50%; transform: translateX(-
 #hudHelp { border: 0; cursor: pointer; font: inherit; font-size: 15px; font-weight: 800; color: var(--violet-d); }
 @media (max-width: 760px) { #hudHelp span { display: none; } }
 @media (max-width: 600px) { .hud-top { gap: 5px; } .hud-top .pill { padding: 4px 9px; font-size: 15px; } .hud-top .icon-btn { width: 36px; height: 36px; font-size: 16px; } }
+/* ترتيب الحروف: تعليمات بارزة وقطع كبيرة واضحة أنها تُضغط */
+.page-card { touch-action: manipulation; }
+#orderHint.howto { background: #fff1c9; border: 2px solid #f2b631; border-radius: 12px; padding: 8px 14px; color: #5a3b00; font-weight: 800; font-size: 18px; }
+.pool.nudge .page-card { animation: orderNudge 1.3s ease-in-out infinite; border-color: var(--violet); }
+@keyframes orderNudge { 50% { transform: translateY(-5px) scale(1.04); } }
+#orderCheck.ready { animation: orderNudge 1s ease-in-out infinite; }
+#order.letters .order-cols { grid-template-columns: 1fr; gap: 6px; }
+#order.letters .order-cols h3 { text-align: center; }
+#order.letters .pool, #order.letters .slots { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+#order.letters .slots li { flex-direction: column; gap: 4px; width: 76px; }
+#order.letters .slots li::before { flex: 0 0 26px; font-size: 16px; }
+#order.letters .slots .empty { flex: none; height: 76px; min-height: 76px; }
+#order.letters .page-card { width: 76px; height: 76px; padding: 0; text-align: center; font-size: 44px; font-weight: 900; line-height: 1; color: var(--violet-d); }
