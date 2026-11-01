@@ -1527,6 +1527,10 @@ function stepTiles(st) {
   return new Promise((res) => {
     rr.layout = () => {
       const opts = shuffle(st.options.slice());
+      const under = rr.r.tiles.findIndex((tt) => Math.abs(P.pos.x - tt.x) < 1.5 && Math.abs(P.pos.z - tt.z) < 1.0);
+      if (under >= 0 && opts[under] === st.answer && opts.length > 1) { const o = (under + 1) % opts.length; [opts[under], opts[o]] = [opts[o], opts[under]]; }
+      rr.lastTile = under >= 0 ? rr.r.tiles[under] : null;
+      rr.tileCand = null;
       rr.r.tiles.forEach((t, k) => {
         const w = opts[k];
         t.word = w || ''; t.on = !!w; t.lb.visible = !!w; t.mesh.material = mat(0xfff3d6);
@@ -1668,7 +1672,7 @@ function misspell(word) {
   out.delete(word);
   return shuffle([...out]);
 }
-const orderStep = (w) => { const plain = w.replace(/[\u064B-\u0652]/g, ''); return { type: 'order', title: `أعد حروف الكلمة إلى مكانها: «${plain}»`, items: [...plain] }; };
+const orderStep = (w) => { const plain = w.replace(/[\s\u064B-\u0652]/g, ''); return { type: 'order', title: `أعد حروف الكلمة إلى مكانها: «${w.replace(/[ً-ْ]/g, '')}»`, items: [...plain] }; };
 // أسئلة عدّلها المعلم لهذا الصف والغرفة (على جهازه وعند من يفتح رابطه أو ملفه فقط)
 function customSteps(id) {
   const cu = HW.custom(G.grade, id);
@@ -1701,9 +1705,9 @@ function spellingSteps() {
     custom.list.forEach((x) => {
       const wrong = x.w.concat(misspell(x.a).filter((v) => !x.w.includes(v))).slice(0, 3);
       if (wrong.length) steps.push({ type: 'tiles', q: `${custom.topic ? custom.topic + ': ' : ''}أيّ الكتابات صحيحة؟`, answer: x.a, options: [x.a, ...wrong] });
-      steps.push(orderStep(x.a));
+      if (orderStep(x.a).items.length > 1) steps.push(orderStep(x.a));
     });
-    return steps;
+    if (steps.length) return steps;
   }
   const cu = customSteps('spelling');
   if (cu) return cu;
@@ -1961,8 +1965,13 @@ function updateRoom(dt) {
   const r = roomRun.r;
   if (roomRun.onTile && G.lock === 0) {
     const tile = r.tiles.find((tt) => tt.on && Math.abs(P.pos.x - tt.x) < 1.5 && Math.abs(P.pos.z - tt.z) < 1.0 && P.pos.y < 0.05);
-    if (tile && tile !== roomRun.lastTile) roomRun.onTile(tile);
-    roomRun.lastTile = tile || null;
+    if (!tile) { roomRun.lastTile = null; roomRun.tileCand = null; }
+    else if (tile !== roomRun.lastTile) {
+      // وقوف قصير على البلاطة: المرور فوقها في الطريق إلى غيرها ليس جوابًا
+      if (roomRun.tileCand !== tile) { roomRun.tileCand = tile; roomRun.tileT = 0; }
+      roomRun.tileT += dt;
+      if (roomRun.tileT >= 0.4) { roomRun.tileCand = null; roomRun.lastTile = tile; roomRun.onTile(tile); }
+    }
   }
   if (roomRun.attackMax > 0) {
     roomRun.attackLeft -= dt;
@@ -2423,10 +2432,10 @@ function openOrder(o = {}) {
     // حروف الكلمة تظهر كبيرة في صف واحد لتُقرأ على السبورة
     panel.classList.toggle('letters', !!o.items && pages.every((p) => [...p.replace(/[\u064B-\u0652]/g, '')].length <= 2));
     let order = pages.map((_, i) => i);
-    do shuffle(order); while (order.every((v, i) => v === i));
+    if (pages.length > 1) do shuffle(order); while (order.every((v, i) => v === i));
     const placed = new Array(pages.length).fill(null);
     const locked = new Array(pages.length).fill(false);
-    let tries = 0;
+    let tries = 0, checking = false;
     const card = (i, cls = '') => {
       const b = document.createElement('button');
       b.className = 'page-card ' + cls; b.textContent = pages[i]; b.dataset.i = i;
@@ -2455,6 +2464,8 @@ function openOrder(o = {}) {
     $('orderReset').onclick = () => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); fb.textContent = ''; render(); };
     $('orderCheck').onclick = () => {
       if (placed.includes(null)) { fb.textContent = gt(o.items ? 'ضع كل القطع أولًا.' : 'ضع كل الصفحات أولًا.'); fb.style.color = '#ff6b6b'; return; }
+      if (checking) return;
+      checking = true;
       tries++;
       let wrong = 0;
       const seq = placed.map((i) => pages[i]);
@@ -2473,7 +2484,7 @@ function openOrder(o = {}) {
       fb.textContent = gt(tries > 1
         ? (o.items ? 'القطع الخضراء في مكانها. ' + (o.hint2 || 'فكّر: ماذا يأتي بعد آخر قطعة صحيحة؟') : 'الصفحات الخضراء في مكانها. اقرأ آخر صفحة صحيحة، وابحث عمّا حدث بعدها.')
         : (o.items ? `عدد القطع التي ليست في مكانها: ${wrong}. الخضراء صحيحة.` : `عدد الصفحات التي ليست في مكانها: ${wrong}. الخضراء صحيحة، أعد قراءة الباقي.`));
-      setTimeout(() => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); render(); }, 1100);
+      setTimeout(() => { placed.forEach((_, k) => { if (!locked[k]) placed[k] = null; }); checking = false; render(); }, 1100);
     };
     fb.textContent = '';
     render();
@@ -2948,6 +2959,7 @@ for (let i = 0; i < 13; i++) {
 }
 async function exitToYard() {
   G.lock++;
+  G.place = null; save();
   SFX.play('door');
   await fade(true);
   setArea('yard');
@@ -3368,6 +3380,7 @@ async function tryRoom(hero, grade, i) {
   else await enterRoom(i);
 }
 async function continueGame(sv) {
+  G.picking = true;   // لا حفظ حتى تكتمل استعادة اللعبة
   SFX.init();
   resetProgress();
   sv.stars.forEach((s) => G.stars.add(s)); applyStars();
@@ -3380,6 +3393,9 @@ async function continueGame(sv) {
   setPlayerName(sv.name || '');
   applyGrade(sv.grade || 3);
   G.stage = sv.stage;
+  G.place = sv.place;
+  G.picking = false;
+  save();
   player.g.visible = true;
   await fade(true);
   startPlaying();
@@ -3486,6 +3502,8 @@ function setPlayerName(n) {
 function nameGo() {
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 14);
   if (!n) { $('nameInput').focus(); $('nameInput').classList.add('shake'); setTimeout(() => $('nameInput').classList.remove('shake'), 400); return; }
+  if (G.starting) return;
+  G.starting = true;
   G.picking = false;
   $('namePick').hidden = true;
   setPlayerName(n);
@@ -3495,7 +3513,7 @@ $('nameGo').onclick = nameGo;
 $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') nameGo(); });
 // تغيير الصف أثناء اللعب (من قائمة الاستراحة): الغرف التي لم تُهزم بعد تأخذ أسئلة الصف الجديد
 $('btnGrade').onclick = () => { $('pause').hidden = true; gradeThen = () => { G.paused = false; toast('صارت الأسئلة على قدر الصف ' + GRADE_NAMES[G.grade - 1], 'good', 2600); }; $('gradePick').hidden = false; };
-$('btnContinue').onclick = () => { const sv = loadSave(); if (sv) continueGame(sv); };
+$('btnContinue').onclick = () => { const sv = loadSave(); if (sv && !G.starting) { G.starting = true; continueGame(sv); } };
 $('btnAsk').onclick = () => { askFriend(); $('btnAsk').blur(); };
 HW.init({ rooms: SC.rooms.filter((r) => r.id === 'library' || (RC[r.id] && !RC[r.id].boss)).map((r) => ({ id: r.id, name: r.name })), allRooms: SC.rooms.map((r, i) => ({ id: r.id, name: r.name, i })), tryRoom, editRooms: SC.rooms.filter((r) => r.id === 'library' || RC[r.id]).map((r) => ({ id: r.id, name: r.name })), grades: GRADE_NAMES, bank: teacherBank, name: () => G.name || '', gt, onTimeout: () => hurtHero(25) });
 $('btnPauseHw').onclick = () => HW.openList();
