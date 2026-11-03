@@ -328,6 +328,7 @@ function upgradeToGLB(group, url, height) {
       o.frustumCulled = false;
       const map = o.material.map;
       if (map) { map.encoding = THREE.LinearEncoding; map.anisotropy = renderer.capabilities.getMaxAnisotropy(); }   // وجه أوضح من قرب
+      if (map && isTouch) shrinkTex(map, 512);
       // ألوان الشخصية كما في صورتها تمامًا (البشرة والملابس)، دون أن تغيّرها إضاءة اللعبة؛ الظلال مرسومة أصلًا في خامة Meshy
       o.material = new THREE.MeshBasicMaterial({ map, side: THREE.DoubleSide });
     });
@@ -346,6 +347,17 @@ function upgradeToGLB(group, url, height) {
     glbChars.push(group);
     setAnim(group, 'idle');
   }
+}
+// على الهاتف: خامة كل شخصية 512 بكسل بدل 1024 أو 2048، فلا تمتلئ ذاكرة الآيفون مع إحدى عشرة شخصية فيتجمّد
+function shrinkTex(map, max) {
+  const im = map.image;
+  if (!im || !(im.width > max)) return;
+  const c = document.createElement('canvas');
+  c.width = c.height = max;
+  c.getContext('2d').drawImage(im, 0, 0, max, max);
+  if (im.close) im.close();
+  map.image = c;
+  map.needsUpdate = true;
 }
 // يدا شتشوتة ملتصقتان بفستانها في صورتها، فلوّنهما Meshy بلون الفستان: نضع يدين بلون بشرتها على مفصلَي اليدين
 const HAND_FIX = { shtshouta: 0xf0c4a6 };
@@ -3566,7 +3578,7 @@ async function boot() {
   if (sv && sv.stage && sv.stage !== 'intro') $('btnContinue').hidden = false;
   $('loading').hidden = true;
   requestAnimationFrame(frame);
-  window.__game = { G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; } };   // للاختبار من وحدة التحكم
+  window.__game = { G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
 }
 function wait2(ms) { return new Promise((r) => setTimeout(r, ms)); }
 boot();
