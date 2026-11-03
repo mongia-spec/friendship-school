@@ -3073,11 +3073,14 @@ function updateTeam(dt) {
     const d = Math.hypot(leader.x - o.x, leader.z - o.z);
     const gap = i === 0 ? 1.8 : 1.4;
     let moving = false;
-    if (d > gap) {
+    // يقف التابع إذا وصل إلى مسافته، ولا يتحرك من جديد إلا إذا ابتعد البطل فعلًا
+    // (بلا هذا الهامش يبقى «يمشي» في مكانه بسبب فروق كسرية صغيرة جدًا في المسافة)
+    if (d > gap + (t.still ? 0.35 : 0.02)) {
       const sp = Math.min(d - gap, 9 * dt * (d > 6 ? 2 : 1));
       o.x += (leader.x - o.x) / d * sp; o.z += (leader.z - o.z) / d * sp;
       moving = true;
     }
+    t.still = !moving;
     if (d > 25) o.set(leader.x + 1, 0, leader.z + 1);
     if (t.obj.userData.glb) {                    // شخصية متحركة: تلتفت إلى اتجاه سيرها وتمشي أو تجري
       if (moving) t.obj.rotation.y = angleLerp(t.obj.rotation.y, Math.atan2(leader.x - o.x, leader.z - o.z), 1 - Math.exp(-dt * 10));

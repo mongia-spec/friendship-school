@@ -35,6 +35,11 @@ window.GAME_CONTENT = {
     heroBoy: 'assets/chars/heroBoy.js',
     shtshout: 'assets/chars/shtshout.js',
     shtshouta: 'assets/chars/shtshouta.js',
+    rashed: 'assets/chars/rashed.js',
+    mazen: 'assets/chars/mazen.js',
+    maryam: 'assets/chars/maryam.js',
+    dana: 'assets/chars/dana.js',
+    noura: 'assets/chars/noura.js',
   },
 
   // المدرسة: لافتات الواجهة والممر، وغرف الممر الرئيسي (بحسب تصاميم الأستاذة منجية)
