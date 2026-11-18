@@ -91,6 +91,7 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 6px; margin: 0 2px; 
 .dlg-wave i:nth-child(2) { animation-delay: -.15s; } .dlg-wave i:nth-child(3) { animation-delay: -.3s; }
 .dlg-wave i:nth-child(4) { animation-delay: -.45s; } .dlg-wave i:nth-child(5) { animation-delay: -.6s; }
 @keyframes wave { 50% { height: 56px; } }
+
 #dialog.voiced .dlg-text { display: none; }
 #dialog:not(.voiced) .dlg-wave, #dialog:not(.voiced) .dlg-replay { display: none; }
 .dlg-bar { display: flex; justify-content: space-between; align-items: center; }
@@ -163,6 +164,7 @@ body.touch #prompt { bottom: 300px; }
 
 /* الحوار المسموع بلا مستطيل ولا كتابة: الكاميرا تقترب من المتكلم، والنقر في أي مكان يتخطى الجملة */
 #dialog.voiced { inset: 70px 0 0 0; bottom: 0; left: 0; transform: none; width: auto; opacity: 0; }
+
 
 /* اختيار الصف */
 .grade-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
@@ -277,3 +279,10 @@ html[dir="ltr"] .dlg-next { text-align: right; }
 html[dir="ltr"] .page-card, html[dir="ltr"] #quizQ, html[dir="ltr"] #riddle, html[dir="ltr"] #dlgText, html[dir="ltr"] #toast, html[dir="ltr"] #tip, html[dir="ltr"] .hw-text { unicode-bidi: plaintext; }
 html[dir="ltr"] .page-card { text-align: start; }
 html[dir="ltr"] .quiz-opts .page-card, html[dir="ltr"] #order.letters .page-card { text-align: center; }
+
+/* زر تخطي الحوار، والترجمة المكتوبة تظهر دائمًا مع الصوت */
+.dlg-skip { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 30; border: 3px solid #fff; background: rgba(42,31,77,.85); color: #fff; border-radius: 99px; padding: 8px 20px; font: inherit; font-size: 17px; font-weight: 900; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+.dlg-skip:hover { background: var(--violet); }
+/* بطاقة النهاية: كل الشخصيات تظهر كاملة */
+#endCast { flex-wrap: wrap; height: auto; max-height: 34vh; }
+#endCast img { height: clamp(70px, 14vh, 150px); max-width: 10.5%; min-width: 0; }

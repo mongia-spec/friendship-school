@@ -585,5 +585,8 @@ I18N.add('en', {
  "رتّب الفصول كما رأيتها": "Put the seasons in the order you saw them",
  "رتّب أفكار المقال الحجاجي": "Put the ideas of the argumentative essay in order",
  "رتّب أفكار الفقرة الحجاجية": "Put the ideas of the argumentative paragraph in order",
- "اكتب الكلمات: سأل، مسؤول، رئيس\nأو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول": "Type the words: because, friend, believe\nor set the wrong spellings yourself: friend | freind | frend"
+ "اكتب الكلمات: سأل، مسؤول، رئيس\nأو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول": "Type the words: because, friend, believe\nor set the wrong spellings yourself: friend | freind | frend",
+ "⏭ تخطَّ الحوار": "⏭ Skip dialogue",
+ "🚪 اخرج من الغرفة الآن": "🚪 Leave the room now",
+ "⚠️ اضغط مرة أخرى للتأكيد: سيُمسح كل التقدّم": "⚠️ Press again to confirm: all progress will be erased"
 });

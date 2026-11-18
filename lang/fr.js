@@ -585,5 +585,8 @@ I18N.add('fr', {
  "رتّب الفصول كما رأيتها": "Remets les saisons dans l'ordre où tu les as vues",
  "رتّب أفكار المقال الحجاجي": "Remets dans l'ordre les idées du texte argumentatif",
  "رتّب أفكار الفقرة الحجاجية": "Remets dans l'ordre les idées du paragraphe argumentatif",
- "اكتب الكلمات: سأل، مسؤول، رئيس\nأو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول": "Écris les mots : parce que, ami, croire\nou indique toi-même les fautes : croire | croir | crois"
+ "اكتب الكلمات: سأل، مسؤول، رئيس\nأو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول": "Écris les mots : parce que, ami, croire\nou indique toi-même les fautes : croire | croir | crois",
+ "⏭ تخطَّ الحوار": "⏭ Passer le dialogue",
+ "🚪 اخرج من الغرفة الآن": "🚪 Quitter la salle",
+ "⚠️ اضغط مرة أخرى للتأكيد: سيُمسح كل التقدّم": "⚠️ Appuie encore pour confirmer : toute la progression sera effacée"
 });
