@@ -4,6 +4,7 @@
 'use strict';
 const C = window.GAME_CONTENT, S = window.SPRITES;
 const RC = window.ROOMS_CONTENT || {}, RX = window.ROOMS_EXTRA || { order: [] };
+if (I18N.lang !== 'ar') ['skillGain', 'skillWin', 'levelUp', 'lockedMsg', 'step'].forEach((k) => { if (RX[k]) RX[k] = tr(RX[k]); });
 // الطلاب الخمسة المحتجزون في غرف الوحوش (سالم في المكتبة)
 const STUDENTS = { rashed: 'راشد', mazen: 'مازن', maryam: 'مريم', dana: 'دانة', noura: 'نورة' };
 Object.assign(C.names, STUDENTS);
@@ -41,6 +42,7 @@ const GIRL_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL
 // لا نغيّر ما بين « » لأنه أمثلة ونصوص مقتبسة
 function outsideQuotes(text, fn) { return String(text).split(/(«[^»]*»)/).map((p, i) => (i % 2 ? p : fn(p))).join(''); }
 function gt(text) {
+  if (I18N.lang !== 'ar') return tr(text);
   if (G.hero !== 'girl' || !text) return text;
   return outsideQuotes(text, (p) => {
     GIRL_PHRASES.forEach(([m, f]) => { p = p.split(m).join(f); });
@@ -53,6 +55,7 @@ const GIRL_SITUATION = { تأخّرتَ: 'تأخّرتِ', أنهيتَ: 'أنه
 const GIRL_QUESTIONS = [['عرض عليك', 'عرض عليكِ'], ['ماذا تفعل', 'ماذا تفعلين'], ['ماذا تقول', 'ماذا تقولين'], ['ماذا تقصد', 'ماذا تقصدين'], ['ماذا تحمل', 'ماذا تحملين'], ['كيف تردّ', 'كيف تردّين'], ['كيف تراجعها', 'كيف تراجعينها'], ['كيف تراجع', 'كيف تراجعين'], ['كيف تقرأ', 'كيف تقرئين'], ['كيف تدوّن', 'كيف تدوّنين'], ['كيف تتصرّف', 'كيف تتصرّفين'], ['كيف تختبر', 'كيف تختبرين'], ['كيف تتحقّق', 'كيف تتحقّقين'], ['كيف تدرسه', 'كيف تدرسينه'], ['كيف تجعله', 'كيف تجعلينه'], ['متى تبدأ', 'متى تبدئين'], ['متى تحلّه', 'متى تحلّينه'], ['متى تأكل', 'متى تأكلين'], ['أن تجيب', 'أن تجيبي'], ['أن تستعير', 'أن تستعيري'], ['أن تقترح', 'أن تقترحي'], ['لتكوّن', 'لتكوّني'], ['لا توافق', 'لا توافقين']];
 const SIT_RE = new RegExp('(?<![\\u0621-\\u0652])([وف]?)(' + Object.keys(GIRL_SITUATION).join('|') + ')(?![\\u0621-\\u0652])', 'g');
 function gq(text) {
+  if (I18N.lang !== 'ar') return text;
   if (G.hero !== 'girl' || !text) return text;
   const t = String(text), first = t.split(/\s+/)[0].replace(/[:،]$/, '');
   const head = GIRL_STEMS[first] ? GIRL_STEMS[first] + t.slice(first.length) : t;
@@ -175,6 +178,7 @@ function wrapLines(g, text, maxW) {
   return out;
 }
 function textCanvas(text, o = {}) {
+  text = tr(text);
   const size = o.size || 64, pad = o.pad ?? 26, weight = o.weight || 900;
   const c = document.createElement('canvas'), g = c.getContext('2d');
   const font = `${weight} ${size}px ${FONT}`;
@@ -193,7 +197,7 @@ function textCanvas(text, o = {}) {
     g.fill();
     if (o.border) { g.lineWidth = 8; g.strokeStyle = o.border; g.stroke(); }
   }
-  g.direction = 'rtl'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.direction = I18N.rtl() ? 'rtl' : 'ltr'; g.textAlign = 'center'; g.textBaseline = 'middle';
   lines.forEach((l, i) => {
     const y = pad * 0.6 + lh * (i + 0.5);
     if (o.stroke) { g.lineWidth = size * 0.16; g.strokeStyle = o.stroke; g.lineJoin = 'round'; g.strokeText(l, w / 2, y); }
@@ -2282,18 +2286,18 @@ function nextLine() {
   }
   const sp = SPEAKER[line.who] || SPEAKER.narrator;
   aimAtSpeaker(line.who);
-  $('dlgName').textContent = C.names[line.who] || '';
+  $('dlgName').textContent = tr(C.names[line.who] || '');
   $('dlgName').style.background = sp.color;
   const por = $('dlgPortrait');
   por.innerHTML = '';
   if (sp.img) { const im = new Image(); im.src = S[sp.img].src; im.alt = C.names[line.who]; por.appendChild(im); }
   else { const d = document.createElement('div'); d.className = 'ph-face'; d.style.background = sp.bg; d.textContent = sp.face; por.appendChild(d); }
   const fem = G.hero === 'girl';
-  dlg.full = (fem && line.textF) || line.text; dlg.shown = 0; dlg.lineAt = performance.now();
+  dlg.full = tr((fem && line.textF) || line.text); dlg.shown = 0; dlg.lineAt = performance.now();
   clearInterval(dlg.timer); clearTimeout(dlg.autoT);
   $('dlgText').textContent = '';
   const src = VOICES[fem && VOICES[line.id + '-f'] ? line.id + '-f' : line.id];
-  if (src && !SFX.muted) playVoice(src);
+  if (src && !SFX.muted && I18N.lang === 'ar') playVoice(src);
   else showText();
 }
 // من يتكلم الآن؟ أقرب شخصية ظاهرة بهذا الاسم؛ الكاميرا تقترب منها ونسمع صوتها دون كتابة
@@ -2413,7 +2417,7 @@ function toast(text, kind = 'good', ms = 1800) {
   clearTimeout(toastT); toastT = setTimeout(() => { t.className = ''; }, ms);
 }
 // التعليمات تذكر الزر المطلوب: على الحاسوب المفتاح، وعلى الهاتف زر الشاشة
-const withKeys = (text) => { const t = gt(String(text || '')).replace(/اقفزي?/, G.hero === 'girl' ? (isTouch ? 'اقفزي (اضغطي زر «قفز»)' : 'اقفزي (اضغطي مفتاح المسافة)') : (isTouch ? 'اقفز (اضغط زر «قفز»)' : 'اقفز (اضغط مفتاح المسافة)')); return isTouch ? t.replace(/اضغطي? E/, G.hero === 'girl' ? 'اضغطي زر «تفاعل»' : 'اضغط زر «تفاعل»').replace(/بالأسهم أو WASD/, 'بعصا التحكم') : t; };
+const withKeys = (text) => { if (I18N.lang !== 'ar') { const t = gt(String(text || '')); return isTouch ? t.replace(/press E/i, 'tap «Interact»').replace(/appuie sur E/i, 'touche « Interagir »').replace(/the arrow keys or WASD|les flèches ou ZQSD\/WASD/, I18N.lang === 'fr' ? 'le joystick' : 'the joystick') : t; } const t = gt(String(text || '')).replace(/اقفزي?/, G.hero === 'girl' ? (isTouch ? 'اقفزي (اضغطي زر «قفز»)' : 'اقفزي (اضغطي مفتاح المسافة)') : (isTouch ? 'اقفز (اضغط زر «قفز»)' : 'اقفز (اضغط مفتاح المسافة)')); return isTouch ? t.replace(/اضغطي? E/, G.hero === 'girl' ? 'اضغطي زر «تفاعل»' : 'اضغط زر «تفاعل»').replace(/بالأسهم أو WASD/, 'بعصا التحكم') : t; };
 function tip(text) { $('tip').textContent = withKeys(text); }
 function setHealth(h) {
   G.health = Math.max(0, h);
@@ -3274,7 +3278,7 @@ function updateInteract() {
   const pr = $('prompt');
   if (currentInteract) {
     pr.hidden = false;
-    pr.innerHTML = isTouch ? `${gt('اضغط')} «تفاعل»: ${gt(currentInteract.label)}` : `${gt('اضغط')} <kbd>E</kbd>: ${gt(currentInteract.label)}`;
+    pr.innerHTML = isTouch ? `${gt('اضغط')} ${gt('«تفاعل»')}: ${gt(currentInteract.label)}` : `${gt('اضغط')} <kbd>E</kbd>: ${gt(currentInteract.label)}`;
   } else pr.hidden = true;
   // الدخول بالمشي إلى الباب مباشرة، دون الحاجة إلى زر
   if (G.lock === 0 && !G.busy && (G.stage === 'yard2' || G.stage === 'done') && G.area === 'yard' && P.pos.z < -22.4 && Math.abs(P.pos.x) < 2.2) { G.busy = true; enterHall().then(() => { G.busy = false; }); }
@@ -3459,7 +3463,7 @@ function renderSkills() {
     const lv = skillLevel(k.id);
     return '<div class="skill-row"><span class="skill-ic">' + k.icon + '</span><b>' + k.name + '</b><div class="skill-bar"><i style="width:' + lv * 20 + '%;background:' + k.color + '"></i></div><small>' + '★'.repeat(lv) + '☆'.repeat(5 - lv) + '</small></div>';
   }).join('');
-  $('skillsLevel').textContent = gt('مستوى بطلك: ') + powerLevel() + ' من 5 · مجموع النقاط: ' + skillPoints();
+  $('skillsLevel').textContent = gt('مستوى بطلك: ' + powerLevel() + ' من 5 · مجموع النقاط: ' + skillPoints());
 }
 $('hudStars').onclick = () => { renderSkills(); $('skills').hidden = false; G.paused = true; };
 $('skillsClose').onclick = () => { $('skills').hidden = true; G.paused = false; };
@@ -3578,7 +3582,7 @@ async function boot() {
   if (sv && sv.stage && sv.stage !== 'intro') $('btnContinue').hidden = false;
   $('loading').hidden = true;
   requestAnimationFrame(frame);
-  window.__game = { G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
+  window.__game = { say, toast, tip, G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
 }
 function wait2(ms) { return new Promise((r) => setTimeout(r, ms)); }
 boot();

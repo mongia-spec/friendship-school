@@ -266,3 +266,14 @@ body.touch #btnFull { top: auto; bottom: 8px; left: 50%; transform: translateX(-
   #order.letters .slots li { width: 58px; }
   #order.letters .slots .empty { height: 58px; min-height: 58px; }
 }
+
+/* ---------- اللغات ---------- */
+.lang-pick { display: inline-flex; align-items: center; gap: 6px; margin: 4px auto 14px; font-size: 18px; font-weight: 800; color: inherit; }
+.lang-select { font: inherit; font-size: 17px; font-weight: 800; padding: 6px 12px; border-radius: 12px; border: 3px solid #e3d8ff; background: #fff; color: var(--violet-d); cursor: pointer; }
+html[dir="ltr"] .keys, html[dir="ltr"] .order-cols, html[dir="ltr"] .skill-row, html[dir="ltr"] .hw-input, html[dir="ltr"] .hw-label,
+html[dir="ltr"] .hw-text, html[dir="ltr"] .hw-row-item, html[dir="ltr"] .hw-work, html[dir="ltr"] .hw-check, html[dir="ltr"] .hw-edit-row { text-align: left; }
+html[dir="ltr"] .hw-input[dir="ltr"]:placeholder-shown { direction: ltr; }
+html[dir="ltr"] .dlg-next { text-align: right; }
+html[dir="ltr"] .page-card, html[dir="ltr"] #quizQ, html[dir="ltr"] #riddle, html[dir="ltr"] #dlgText, html[dir="ltr"] #toast, html[dir="ltr"] #tip, html[dir="ltr"] .hw-text { unicode-bidi: plaintext; }
+html[dir="ltr"] .page-card { text-align: start; }
+html[dir="ltr"] .quiz-opts .page-card, html[dir="ltr"] #order.letters .page-card { text-align: center; }

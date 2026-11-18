@@ -99,6 +99,7 @@
       <h1>مدرسة الأصدقاء</h1>
       <h2>سرّ الكتاب المخفي</h2>
       <div class="cast" id="titleCast"></div>
+      <label class="lang-pick">🌐 <select class="lang-select" id="langTitle" aria-label="Language"></select></label>
       <div class="menu">
         <button class="btn big" id="btnNew">ابدأ المغامرة</button>
         <button class="btn" id="btnContinue" hidden>متابعة من آخر نقطة</button>
@@ -109,7 +110,7 @@
         </div>
       </div>
       <p class="credit">فكرة وتصميم تربوي: الأستاذة منجية عادل</p>
-      <p class="credit" dir="ltr" lang="en" style="margin-top:6px;font-size:14px;opacity:.8">A 3D Arabic-learning adventure where children do their homework while playing · by Mongia Adel · 3D characters made with Meshy AI</p>
+      <p class="credit" id="creditEn" dir="ltr" lang="en" style="margin-top:6px;font-size:14px;opacity:.8">A 3D Arabic-learning adventure where children do their homework while playing · by Mongia Adel · 3D characters made with Meshy AI</p>
     </div>
   </div>
 
@@ -184,6 +185,7 @@
         <button class="btn ghost" id="btnPauseHw">📥 واجباتي</button>
         <button class="btn ghost" id="btnPauseHelp">طريقة اللعب</button>
         <button class="btn ghost" id="btnRestart">إعادة المستوى من البداية</button>
+        <label class="lang-pick">🌐 <select class="lang-select" id="langPause" aria-label="Language"></select></label>
       </div>
     </div>
   </div>
@@ -360,6 +362,10 @@
   <div id="loading" class="screen"><div class="spinner"></div><p>جارٍ تجهيز المدرسة...</p></div>
 </div>
 
+<script src="js/i18n.js"></script>
+<script src="lang/en.js"></script>
+<script src="lang/fr.js"></script>
+<script>I18N.start(); if (I18N.lang !== 'ar') document.getElementById('creditEn').hidden = true;</script>
 <script src="vendor/three.min.js"></script>
 <script src="vendor/three-addons.js"></script>
 <script src="assets/sprites.js"></script>
