@@ -2271,6 +2271,7 @@ function say(lines) {
     dlg.queue = lines.slice(); dlg.res = res;
     preloadVoices(lines);
     $('dialog').hidden = false;
+    $('dlgSkip').hidden = false;
     $('prompt').hidden = true;
     nextLine();
   });
@@ -2279,6 +2280,7 @@ function nextLine() {
   const line = dlg.queue.shift();
   if (!line) {
     $('dialog').hidden = true;
+    $('dlgSkip').hidden = true;
     dlg.speaker = null;
     G.lock--;
     const r = dlg.res; dlg.res = null; r && r();
@@ -2340,8 +2342,9 @@ function speakerCam() {
 // الحوار مسموع: الصوت بدل الكتابة، ويتقدّم وحده حين ينتهي الصوت
 function playVoice(src) {
   $('dialog').classList.add('voiced');
+  dlg.shown = dlg.full.length; $('dlgText').textContent = dlg.full;   // ترجمة مكتوبة مع الصوت دائمًا
   const a = voice;
-  a.onended = () => { $('dlgWave').classList.remove('on'); dlg.autoT = setTimeout(() => { if (!$('dialog').hidden) nextLine(); }, 700); };
+  a.onended = () => { $('dlgWave').classList.remove('on'); const adv = () => { if (G.paused) { dlg.autoT = setTimeout(adv, 400); return; } if (!$('dialog').hidden) nextLine(); }; dlg.autoT = setTimeout(adv, 700); };
   // لا نُظهر الكتابة إذا تأخر الصوت: نعيد المحاولة (الشبكة البطيئة)، أو ننتظر لمسة التلميذ (منع التشغيل التلقائي)
   let tries = 0;
   const retry = (e) => {
@@ -2390,6 +2393,12 @@ function advanceDialog() {
 const voice = new Audio();
 const VOICES = window.VOICES || {};
 $('dialog').addEventListener('click', userAdvance);
+$('dlgSkip').addEventListener('click', (e) => {
+  e.stopPropagation();
+  voice.pause(); clearInterval(dlg.timer); clearTimeout(dlg.autoT);
+  dlg.queue = [];
+  nextLine();
+});
 $('dlgReplay').addEventListener('click', (e) => {
   e.stopPropagation();
   clearTimeout(dlg.autoT);
@@ -3470,7 +3479,12 @@ $('skillsClose').onclick = () => { $('skills').hidden = true; G.paused = false; 
 function togglePause() {
   G.paused = !G.paused;
   $('pause').hidden = !G.paused;
+  $('btnLeaveRoom').hidden = !(G.area === 'room' && roomRun && roomRun.active && !G.preview);
+  if (G.paused) { if (!voice.paused) { voice.pause(); voice.wasPlaying = true; } }
+  else if (voice.wasPlaying) { voice.wasPlaying = false; if (!$('dialog').hidden) voice.play().catch(() => {}); }
 }
+// الخروج من الغرفة أثناء التحدي: نحفظ أن اللاعب في الممر ونعيد التحميل، فيبقى كل ما أنجزه
+$('btnLeaveRoom').onclick = () => { G.place = 'hall'; save(); location.reload(); };
 
 /* ---------------- الصف الدراسي (1-9) ---------------- */
 // أسئلة كل غرفة ونصوص المكتبة على قدر مستوى التلميذ: content/grades-*.js
@@ -3544,7 +3558,10 @@ $('btnHelpClose').onclick = () => { $('help').hidden = true; if (helpPaused) { h
 $('btnPause').onclick = () => togglePause();
 $('btnResume').onclick = () => togglePause();
 $('btnPauseHelp').onclick = () => { $('help').hidden = false; };
-$('btnRestart').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
+let restartArmed = 0;
+$('btnRestart').onclick = () => {
+  if (Date.now() - restartArmed > 5000) { restartArmed = Date.now(); $('btnRestart').textContent = gt('⚠️ اضغط مرة أخرى للتأكيد: سيُمسح كل التقدّم'); setTimeout(() => { if (Date.now() - restartArmed >= 5000) $('btnRestart').textContent = gt('ابدأ اللعبة من جديد'); }, 5100); return; }
+  if (G.preview) { location.reload(); return; } try { localStorage.setItem(SAVE_KEY, JSON.stringify({ stage: 'intro', stars: [] })); } catch (e) { /* */ } location.reload(); };
 $('btnReplay').onclick = () => { if (G.preview) { location.reload(); return; } try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* */ } location.reload(); };
 $('btnMute').onclick = () => { SFX.init(); const on = SFX.toggle(); $('btnMute').textContent = on ? '🔊' : '🔇'; voice.muted = !on; };
 // أثناء الترتيب تتوقف الحركة: نوضح لمن يضغط الأسهم أن الجواب بالضغط على القطع
