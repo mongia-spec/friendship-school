@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta name="robots" content="noindex">
+<base href="../">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>مدرسة الأصدقاء – سرّ الكتاب المخفي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="preview/css/style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="view"></canvas>
+
+  <!-- واجهة اللعب -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <button class="pill" id="hudStars" title="مهاراتي">🎓 <b>0</b></button>
+      <div class="pill" id="hudPower" title="مستوى البطل: يرتفع كلما قويت مهاراتك">⚡ <b>0</b></div>
+      <div class="pill" id="hudEnergy" title="طاقة البطل: تنقص مع الخطأ وتعود بالنجوم">❤️ <b>100</b></div>
+      <div class="pill" id="hudPages" hidden>📄 <b>0</b>/5</div>
+      <div class="pill team" id="hudTeam"></div>
+      <button class="icon-btn" id="btnMute" title="الصوت">🔊</button>
+      <button class="pill" id="hudHelp" title="طريقة اللعب">❓ <span>طريقة اللعب</span></button>
+      <button class="icon-btn" id="btnPause" title="إيقاف مؤقت">⏸</button>
+    </div>
+    <div id="monsterBar" hidden>
+      <span id="monsterName">قِرطاس</span>
+      <div class="bar"><i id="monsterFill"></i></div>
+    </div>
+    <div id="tip"></div>
+    <div id="toast"></div>
+    <div id="prompt" hidden>اضغط <kbd>E</kbd> للتفاعل</div>
+    <div id="riddle" hidden></div>
+  </div>
+
+  <!-- أزرار اللمس -->
+  <div id="touch" hidden>
+    <div id="stick"><div id="knob"></div></div>
+    <div class="tbtns">
+      <button id="tJump">قفز</button>
+      <button id="tUse">تفاعل</button>
+      <button id="tRun">جري</button>
+    </div>
+  </div>
+
+  <!-- الحوار -->
+  <div id="dialog" hidden>
+    <div class="portrait" id="dlgPortrait"></div>
+    <div class="dlg-body">
+      <div class="dlg-name" id="dlgName"></div>
+      <div class="dlg-wave" id="dlgWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dlg-text" id="dlgText"></div>
+      <div class="dlg-bar">
+        <button class="dlg-replay" id="dlgReplay" title="أعد الصوت">🔁</button>
+        <span class="dlg-next" id="dlgNext">اضغط للمتابعة ◀</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ترتيب الصفحات -->
+  <div id="order" class="panel-wrap" hidden>
+    <div class="panel">
+      <h2 id="orderTitle"></h2>
+      <p class="hint" id="orderHint"></p>
+      <div class="order-cols">
+        <div>
+          <h3 id="orderPoolH">الصفحات المبعثرة</h3>
+          <div id="orderPool" class="pool"></div>
+        </div>
+        <div>
+          <h3 id="orderSlotsH">القصة بالترتيب</h3>
+          <ol id="orderSlots" class="slots"></ol>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="orderCheck">تحقّق من الترتيب</button>
+        <button class="btn ghost" id="orderReset">ابدأ من جديد</button>
+      </div>
+      <p class="feedback" id="orderFb"></p>
+    </div>
+  </div>
+
+  <!-- سؤال واختيارات (غرف الوحوش) -->
+  <div id="quiz" class="panel-wrap" hidden>
+    <div class="panel small">
+      <h2 id="quizTitle"></h2>
+      <button class="btn ghost" id="quizListen" hidden>🔊 أعد الاستماع</button>
+      <p class="quiz-q" id="quizQ"></p>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <p class="feedback" id="quizFb"></p>
+    </div>
+  </div>
+
+  <!-- شاشة العنوان -->
+  <div id="title" class="screen">
+    <div class="title-card">
+      <div class="badge">مغامرة تعليمية</div>
+      <h1>مدرسة الأصدقاء</h1>
+      <h2>سرّ الكتاب المخفي</h2>
+      <div class="cast" id="titleCast"></div>
+      <label class="lang-pick">🌐 <select class="lang-select" id="langTitle" aria-label="Language"></select></label>
+      <div class="menu">
+        <button class="btn big" id="btnNew">ابدأ المغامرة</button>
+        <button class="btn" id="btnContinue" hidden>متابعة من آخر نقطة</button>
+        <div class="hw-row">
+          <button class="btn ghost" id="btnHelp">طريقة اللعب</button>
+          <button class="btn ghost" id="btnHomework">📥 واجباتي</button>
+          <button class="btn ghost" id="btnTeacher">📤 للمعلم وولي الأمر</button>
+        </div>
+      </div>
+      <p class="credit">فكرة وتصميم تربوي: الأستاذة منجية عادل</p>
+      <p class="credit" id="creditEn" dir="ltr" lang="en" style="margin-top:6px;font-size:14px;opacity:.8">A 3D Arabic-learning adventure where children do their homework while playing · by Mongia Adel · 3D characters made with Meshy AI</p>
+    </div>
+  </div>
+
+  <!-- اختيار البطل -->
+  <div id="heroPick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>اختر بطلك</h2>
+      <p class="hint">بمن تريد أن تلعب؟</p>
+      <div class="hero-row">
+        <button class="hero-card" data-hero="girl"><span>👧</span>بنت</button>
+        <button class="hero-card" data-hero="boy"><span>👦</span>ولد</button>
+      </div>
+      <button class="btn ghost pick-back">رجوع</button>
+    </div>
+  </div>
+
+  <!-- اختيار الصف الدراسي -->
+  <div id="gradePick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>في أيّ صف أنت؟</h2>
+      <p class="hint">نختار لك الأسئلة والنصوص على قدر مستواك.</p>
+      <div class="grade-row" id="gradeRow"></div>
+      <button class="btn ghost pick-back" id="gradeBack" hidden>رجوع</button>
+    </div>
+  </div>
+
+  <!-- اسم التلميذ -->
+  <div id="namePick" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>ما اسمك؟</h2>
+      <p class="hint">سيظهر اسمك فوق رأس بطلك طوال المغامرة.</p>
+      <input id="nameInput" class="name-input" maxlength="14" placeholder="اكتب اسمك هنا" dir="rtl" autocomplete="off">
+      <div class="menu"><button class="btn big" id="nameGo">ابدأ المغامرة</button><button class="btn ghost pick-back">رجوع</button></div>
+    </div>
+  </div>
+
+  <!-- مهاراتي -->
+  <div id="skills" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>🎓 مهاراتي</h2>
+      <p class="hint">كل إجابة صحيحة وكل شارة تجمعها تقوّي مهارة. كلما اجتهدت صار بطلك أقوى.</p>
+      <p class="skills-level" id="skillsLevel"></p>
+      <div id="skillsList"></div>
+      <button class="btn" id="skillsClose">متابعة اللعب</button>
+    </div>
+  </div>
+
+  <!-- المساعدة -->
+  <div id="help" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>طريقة اللعب</h2>
+      <ul class="keys">
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> أو الأسهم: المشي</li>
+        <li><kbd>Shift</kbd> مع أحد الأسهم معًا: الجري</li>
+        <li><kbd>مسافة</kbd>: القفز</li>
+        <li><kbd>E</kbd> أو <kbd>Enter</kbd>: التفاعل والحوار</li>
+        <li><kbd>H</kbd>: اسأل زميلًا حرّرته ليساعدك في السؤال</li>
+        <li>اسحب بالفأرة أو بالإصبع لتدوير الكاميرا، أو <kbd>Q</kbd> و<kbd>R</kbd></li>
+        <li>على الهاتف: عصا التحكم يسارًا والأزرار يمينًا</li>
+      </ul>
+      <button class="btn" id="btnHelpClose">فهمت</button>
+    </div>
+  </div>
+
+  <!-- الإيقاف المؤقت -->
+  <div id="pause" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>استراحة قصيرة</h2>
+      <div class="menu">
+        <button class="btn" id="btnResume">متابعة اللعب</button>
+        <button class="btn ghost" id="btnGrade">📚 تغيير الصف</button>
+        <button class="btn ghost" id="btnPauseHw">📥 واجباتي</button>
+        <button class="btn ghost" id="btnPauseHelp">طريقة اللعب</button>
+        <button class="btn ghost" id="btnRestart">إعادة المستوى من البداية</button>
+        <label class="lang-pick">🌐 <select class="lang-select" id="langPause" aria-label="Language"></select></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- النهاية -->
+  <div id="end" class="screen dim" hidden>
+    <div class="panel">
+      <h2 id="endTitle"></h2>
+      <div class="cast" id="endCast"></div>
+      <p class="big-line" id="endLine"></p>
+      <p id="endStats"></p>
+      <p class="hint" id="endNext"></p>
+      <div class="row">
+        <button class="btn" id="btnEndGo">تابع المغامرة</button>
+        <button class="btn ghost" id="btnReplay">ابدأ اللعبة من جديد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ملكية اللعبة: تظهر في كل الشاشات -->
+  <button class="icon-btn" id="btnFull" title="شاشة كاملة" aria-label="شاشة كاملة" hidden>⛶</button>
+  <!-- تحدي الوحش: عدّ الهجوم وسؤال الزميل -->
+  <div id="fightBar" hidden>
+    <span id="attackText"></span>
+    <div class="bar"><i id="attackFill"></i></div>
+    <button class="btn ghost" id="btnAsk" hidden></button>
+  </div>
+
+  <!-- واجباتي (الطالب) -->
+  <div id="hwList" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>📥 واجباتي</h2>
+      <p class="feedback" id="hwListMsg"></p>
+      <div id="hwRows"></div>
+      <div class="hw-draft-row" id="hwWordsRow" hidden><span id="hwWordsInfo"></span><button id="hwWordsClear" title="إعادة أسئلة اللعبة">✕</button></div>
+      <div class="hw-draft-row" id="hwCustomRow" hidden><span>أسئلة المعلم مفعّلة في اللعبة على هذا الجهاز</span><button id="hwCustomClear" title="إعادة أسئلة اللعبة">✕</button></div>
+      <label class="btn ghost hw-file">📂 افتح ملف أسئلة المعلم<input type="file" id="hwImport" accept=".json,application/json" hidden></label>
+      <input id="hwPaste" class="hw-input" dir="ltr" placeholder="الصق هنا رابط الواجب من معلمك" autocomplete="off">
+      <div class="row">
+        <button class="btn" id="hwPasteGo">أضف الواجب</button>
+        <button class="btn ghost" id="hwListClose">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الواجب نفسه -->
+  <div id="hwView" class="screen dim" hidden>
+    <div class="panel">
+      <h2 id="hwTitle"></h2>
+      <p class="hint" id="hwMeta"></p>
+      <p class="hw-note" id="hwGateNote" hidden>⚔️ الوحش ضعف جدًا! حلّ واجبك الآن لتوجّه إليه الضربة الأخيرة وتحرر زميلك.</p>
+      <p class="hw-timer" id="hwTimer" hidden></p>
+      <div class="hw-work">
+        <div>
+          <h3>ورقة العمل</h3>
+          <div class="hw-text" id="hwText"></div>
+          <iframe id="hwFrame" class="hw-frame" title="ورقة العمل" hidden></iframe>
+          <button class="btn ghost" id="hwGet"></button>
+        </div>
+        <div>
+          <h3>إجاباتي</h3>
+          <div id="hwNums"></div>
+          <button class="btn" id="hwFinish"></button>
+          <button class="btn ghost" id="hwPaper" hidden>📝 سأسلّمه ورقيًا</button>
+        </div>
+      </div>
+      <div class="hw-row">
+        <button class="btn ghost" id="hwSend">📧 أرسل إجاباتي إلى المعلم</button>
+        <button class="btn ghost" id="hwSaveAns">💾 نزّل إجاباتي</button>
+      </div>
+      <p class="hint" id="hwNoEmail" hidden>لم يضع المعلم بريدًا في الواجب. سلّمه له بالطريقة التي يطلبها.</p>
+      <p class="feedback" id="hwState"></p>
+      <button class="btn" id="hwDone"></button>
+    </div>
+  </div>
+
+  <!-- رفع الواجب (المعلم) -->
+  <div id="hwTeacher" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>📤 للمعلم وولي الأمر</h2>
+      <div class="hw-row">
+        <button class="btn" id="hwfEdit">✏️ لوحة تعديل أسئلة اللعبة</button>
+        <button class="btn" id="hwfTry">🚪 جرّب أي غرفة مباشرة</button>
+      </div>
+      <p class="hint">اكتب واجبًا، أو غيّر كلمات غرفة الإملاء، فتحصل على رابط ترسله إلى طلابك. يظهر ما كتبته لكل طالب يفتح الرابط.</p>
+      <input id="hwfTeacher" class="hw-input" maxlength="60" placeholder="اسم المعلم" autocomplete="off">
+      <input id="hwfEmail" class="hw-input" dir="ltr" maxlength="120" placeholder="بريدك لتسلّم الحلول (اختياري)" autocomplete="off">
+      <p class="hint hw-small">بريدك يكون داخل الرابط، فيراه كل من يصله الرابط.</p>
+      <label class="hw-label" for="hwfRoom">غرفة الواجب</label>
+      <select id="hwfRoom" class="hw-input"></select>
+      <input id="hwfTitle" class="hw-input" maxlength="80" placeholder="عنوان الواجب، مثل: إعراب الفاعل">
+      <textarea id="hwfText" class="hw-input" rows="5" dir="rtl" placeholder="اكتب الأسئلة هنا"></textarea>
+      <input id="hwfUrl" class="hw-input" dir="ltr" placeholder="أو رابط ملف الواجب، مثل Google Drive (اختياري)" autocomplete="off">
+      <p class="hint hw-small">لرفع ملف PDF أو صورة: ضعه في Google Drive، واجعل مشاركته «أي شخص لديه الرابط»، ثم الصق رابطه هنا.</p>
+      <div class="hw-settings">
+        <label class="hw-label">عدد الأسئلة<input id="hwfCount" class="hw-input" type="number" min="1" max="40" placeholder="تلقائي"></label>
+        <label class="hw-label">وقت الحل بالدقائق<input id="hwfMins" class="hw-input" type="number" min="1" max="180" value="15"></label>
+      </div>
+      <label class="hw-check"><input type="checkbox" id="hwfPaper"> أسمح بالتسليم الورقي بدل الحل داخل اللعبة</label>
+      <p class="hint hw-small">اللعبة تضمن أن يملأ الطالب كل الخانات في وقته، أما تصحيح الإجابات فعندك.</p>
+      <div id="hwDraft"></div>
+      <h3 class="hw-label">✏️ كلمات غرفة الإملاء (اختياري)</h3>
+      <p class="hint hw-small">مثال: درّستَ الهمزة المتوسطة هذا الأسبوع. تحلّ كلماتك محل أسئلة الغرفة، ويرتّب الطالب حروفها ويختار كتابتها الصحيحة بينما يطارده الوحش.</p>
+      <input id="hwfTopic" class="hw-input" maxlength="60" placeholder="المهارة، مثل: الهمزة المتوسطة">
+      <textarea id="hwfWords" class="hw-input" rows="3" dir="rtl" placeholder="اكتب الكلمات: سأل، مسؤول، رئيس&#10;أو حدّد الأخطاء بنفسك: مسؤول | مسئول | مسأول | مسءول"></textarea>
+      <div class="hw-row">
+        <button class="btn ghost" id="hwfAdd">➕ واجب آخر</button>
+        <button class="btn" id="hwfMake">🔗 أنشئ الرابط</button>
+        <button class="btn ghost" id="hwfClose">إغلاق</button>
+      </div>
+      <p class="feedback" id="hwfMsg"></p>
+      <div id="hwfOut" hidden>
+        <input id="hwfLink" class="hw-input" dir="ltr" readonly>
+        <div class="hw-row">
+          <button class="btn ghost" id="hwfCopy">📋 انسخ الرابط</button>
+          <a class="btn ghost" id="hwfWhats" target="_blank" rel="noopener">واتساب</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ملكية ثابتة لا تدخل في لوحة المعلم -->
+  <!-- تجربة أي غرفة مباشرة (لا تغيّر تقدّم اللعب المحفوظ) -->
+  <div id="hwTry" class="screen dim" hidden>
+    <div class="panel small">
+      <h2>🚪 جرّب أي غرفة مباشرة</h2>
+      <p class="hint">للمعلم وولي الأمر: تدخل الغرفة فورًا دون المرور بما قبلها. لا تُحفظ هذه التجربة، ولا تغيّر اللعب المحفوظ على هذا الجهاز.</p>
+      <div class="hw-settings">
+        <label class="hw-label">الصف<select id="hwtGrade" class="hw-input"></select></label>
+        <label class="hw-label">البطل<select id="hwtHero" class="hw-input"><option value="girl">بنت</option><option value="boy">ولد</option></select></label>
+      </div>
+      <label class="hw-label">الغرفة<select id="hwtRoom" class="hw-input"></select></label>
+      <div class="hw-row hw-gap">
+        <button class="btn" id="hwtGo">ادخل الغرفة</button>
+        <button class="btn ghost" id="hwtClose">رجوع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- لوحة تعديل الأسئلة -->
+  <div id="hwEdit" class="screen dim" hidden>
+    <div class="panel">
+      <h2>✏️ لوحة تعديل الأسئلة</h2>
+      <p class="hint">صحّح أي سؤال أو احذفه أو أضف غيره ليناسب منهجك. يبقى تعديلك على هذا الجهاز وعند من تشاركه معه، ولا تتغير اللعبة الأصلية.</p>
+      <div class="hw-settings">
+        <label class="hw-label">الصف<select id="hweGrade" class="hw-input"></select></label>
+        <label class="hw-label">الغرفة<select id="hweRoom" class="hw-input"></select></label>
+      </div>
+      <p class="feedback" id="hweState"></p>
+      <div id="hweRows"></div>
+      <div class="hw-row" id="hweAdd">
+        <button class="btn ghost" data-add="choose">➕ سؤال باختيارات</button>
+        <button class="btn ghost" data-add="tiles">➕ سؤال بلاطات</button>
+        <button class="btn ghost" data-add="order">➕ سؤال ترتيب</button>
+      </div>
+      <div class="hw-row hw-gap">
+        <button class="btn" id="hweSave">💾 احفظ</button>
+        <button class="btn ghost" id="hweReset">↩️ إرجاع أسئلة اللعبة</button>
+        <button class="btn ghost" id="hweClose">إغلاق</button>
+      </div>
+      <p class="feedback" id="hweMsg"></p>
+      <h3 class="hw-label">📤 مشاركة أسئلتك مع طلابك</h3>
+      <p class="hint hw-small">كل طالب يلعب على جهازه، لذلك أرسل له هذا الملف أو الرابط ليفتحه مرة واحدة. يفتح الطالب الملف من «📥 واجباتي».</p>
+      <div class="hw-row">
+        <button class="btn ghost" id="hweFile">💾 نزّل ملف الأسئلة</button>
+        <button class="btn ghost" id="hweLink">🔗 أنشئ رابطًا</button>
+      </div>
+      <input id="hweLinkOut" class="hw-input" dir="ltr" readonly hidden>
+    </div>
+  </div>
+
+  <div id="owner">© 2026 لعبة «مدرسة الأصدقاء» من تأليف وتصميم الأستاذة منجية عادل · جميع الحقوق محفوظة · <a href="https://www.instagram.com/ostatha.mongia" target="_blank" rel="noopener">إنستغرام</a> · <a href="https://www.youtube.com/@shtshout" target="_blank" rel="noopener">يوتيوب شتشوت</a></div>
+  <div id="fade"></div>
+  <div id="loading" class="screen"><div class="spinner"></div><p>جارٍ تجهيز المدرسة...</p></div>
+</div>
+
+<script src="preview/js/i18n.js"></script>
+<script src="preview/lang/en.js"></script>
+<script src="preview/lang/fr.js"></script>
+<script>I18N.start(); if (I18N.lang !== 'ar') document.getElementById('creditEn').hidden = true;</script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/three-addons.js"></script>
+<script src="assets/sprites.js"></script>
+<script src="content/level1.js"></script>
+<script src="content/rooms.js"></script>
+<script src="content/grades-1-3.js"></script>
+<script src="content/grades-4-6.js"></script>
+<script src="content/grades-7-9.js"></script>
+<script src="voices/voices.js"></script>
+<script src="js/audio.js"></script>
+<script src="assets/rooms/library.js"></script>
+<script src="js/library-look.js"></script>
+<script src="assets/rooms/hall.js"></script>
+<script src="js/hall-look.js"></script>
+<script src="js/yard-look.js"></script>
+<script src="content/order-rules.js"></script>
+<script src="content/spelling-pools.js"></script>
+<script src="content/grammar-pools.js"></script>
+<script src="content/vocab-pools.js"></script>
+<script src="content/boss-pools.js"></script>
+<script src="js/homework.js"></script>
+<script src="preview/js/game.js"></script>
+</body>
+</html>
