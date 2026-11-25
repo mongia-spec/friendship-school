@@ -1225,7 +1225,19 @@ function buildRoom(i) {
     r.boardObjs[2].position.set(c.x, 2.7, c.z - 10.65);
   };
   r.title = title;
-  if (T === 'board' || T === 'class' || T === 'tests') {
+  const NEW3D = !!window.ROOMS3D && !!room.photo;   // غرف ثلاثية الأبعاد كاملة (js/rooms3d.js) بدل الأثاث المبسّط والصور
+  if (NEW3D) {
+    if (T === 'office') {
+      r.note = signPlane(room.note, 6, { size: 80, color: '#1d2a5c', bg: '#fbf6ea', border: '#5b8bd6', maxW: 1000 });
+      r.mongia = charSprite('mongia', 1.7);
+      r.mongia.position.set(c.x, 0, c.z - 7.4);
+      (window.extraChars = window.extraChars || []).push(r.mongia);
+      r.talkAt = new V3(c.x, 0, c.z - 4.6);
+    } else if (T === 'secret') {
+      for (let k = 0; k < 14; k++) { const sp = glow([0x8e5cf7, 0x5b8bd6, 0xe84d8a][k % 3], 0.6 + Math.random(), scene); sp.position.set(c.x - 6 + Math.random() * 12, 0.5 + Math.random() * 4, c.z - 9 + Math.random() * 14); }
+    }
+    ROOMS3D.build({ scene, signPlane, label, glow, addCol, woodTex }, r, c, room);
+  } else if (T === 'board' || T === 'class' || T === 'tests') {
     board(room.board || (T === 'class' ? 'مرحبًا بكم في صف شتشوت' : 'لا تخافوا من الخطأ... الخطأ معلّم'));
     for (let row = 0; row < 2; row++) for (let col = -1; col <= 1; col++) desk(c.x + col * 4, c.z - 3 + row * 3.5);
   } else if (T === 'tree') {
@@ -1304,7 +1316,7 @@ function buildRoom(i) {
   }
   // نجمتان في كل غرفة، إحداهما عالية
   if (room.theme !== 'library') { addStar('r' + i + 'a', c.x - 9, 1.1, c.z + 8); addStar('r' + i + 'b', c.x + 9, 2.3, c.z + 8); }
-  if (room.photo) roomPhotoLook(r, c, room);
+  if (room.photo && !NEW3D) roomPhotoLook(r, c, room);
   rooms[i] = r;
   return r;
 }
@@ -3599,7 +3611,7 @@ async function boot() {
   if (sv && sv.stage && sv.stage !== 'intro') $('btnContinue').hidden = false;
   $('loading').hidden = true;
   requestAnimationFrame(frame);
-  window.__game = { say, toast, tip, G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
+  window.__game = { buildRoom, setupRoom, camera, scene, say, toast, tip, G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
 }
 function wait2(ms) { return new Promise((r) => setTimeout(r, ms)); }
 boot();
