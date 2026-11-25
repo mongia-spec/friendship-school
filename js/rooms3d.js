@@ -267,7 +267,7 @@
     if (room.theme !== 'stage') { const rug = add(new THREE.PlaneGeometry(9, 6), M('rug' + hex, { map: rugTex(hex) }), c.x, 0.02, c.z + 3.6); rug.rotation.x = -PI / 2; }
     // إضاءة دافئة ناعمة
     // اسم الغرفة على الجدار الخلفي فوق كل شيء
-    if (r.title) r.title.position.set(c.x, 6.1, c.z - 10.85);
+    if (r.title) r.title.position.set(c.x, 6.1, c.z - 10.7);
   }
 
   /* ---------- أثاث كل غرفة حسب موضوعها ---------- */
