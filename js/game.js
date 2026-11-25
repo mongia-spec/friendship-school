@@ -1272,6 +1272,7 @@ function buildRoom(i) {
   if (data) {
     r.data = data;
     r.monster = makeRoomMonster(data.monster, new V3(c.x + 5.5, 0, c.z - 5.5));
+    attachMonsterGLB(r.monster, room.id);
     r.monsterCol = addCol(c.x + 4.3, c.x + 6.7, c.z - 6.7, c.z - 4.3);
     r.tiles = [-5.4, -1.8, 1.8, 5.4].map((dx) => {
       const t = box(3.2, 0.12, 2.2, 0xfff3d6, c.x + dx, 0.06, c.z + 3.6);
@@ -1379,6 +1380,23 @@ function makeRoomMonster(d, pos) {
   const name = label(d.name, 0.5, { size: 54, border: d.color }, g);
   name.position.y = c.top + 0.9;
   return { g, inner, eyes: c.eyes, mouth: c.mouth, arms: c.arms, tail: c.tail, orbit, name, top: c.top, scale: 1, target: 1, hurt: 0, laugh: 0, happy: false, data: d };
+}
+// وحوش Meshy المجسّمة (صور الأستاذة منجية محوّلة إلى 3D): تحلّ محلّ الوحش المرسوم بالأشكال متى وُجد ملفها
+const MONSTER_GLB = { mongia: 'assets/monsters/neglect.glb' };
+function attachMonsterGLB(m, id) {
+  const url = MONSTER_GLB[id];
+  if (!url || !glbLoader) return;
+  glbLoader.load(url, (gltf) => {
+    const o = gltf.scene;
+    const b = new THREE.Box3().setFromObject(o), size = b.getSize(new V3());
+    const k = 1.9 / size.y;
+    o.scale.setScalar(k);
+    o.position.set(-(b.min.x + size.x / 2) * k, -b.min.y * k, -(b.min.z + size.z / 2) * k);
+    o.traverse((n) => { if (n.isMesh && n.material.map) { n.material.map.encoding = THREE.LinearEncoding; n.material.map.needsUpdate = true; } });
+    m.inner.children.forEach((ch) => { ch.visible = false; });
+    m.inner.add(o);
+    m.glb = o;
+  }, undefined, () => {});
 }
 function setRoomHealth(h) {
   if (HW.pending(roomRun.r.room.id)) h = Math.max(8, h);   // لا يُهزم الوحش تمامًا قبل الواجب
