@@ -1187,7 +1187,8 @@ function buildHall() {
   hall.backFront = new V3(HX, 0, 3.5);
   // نجوم الممر: بعضها عالٍ يحتاج قفزة
   [[-3, -6, 1.1], [3, -19, 2.3], [-3, -32, 1.1], [3, -45, 2.3], [-3, -58, 1.1], [3, -71, 2.3], [0, -80, 1.1]].forEach(([dx, z, y], k) => addStar('h' + k, HX + dx, y, z));
-  if (window.HALL_LOOK) HALL_LOOK.init({ scene, HX, G, hall, hemi, sun, mat, mesh, box, glow, canvasTex, texLoader, woodTex });   // الممر بأسلوب صورة الأستاذة: js/hall-look.js
+  if (window.HALL_LOOK) HALL_LOOK.init({ scene, HX, G, hall, hemi, sun, mat, mesh, box, glow, canvasTex, texLoader, woodTex });
+  if (window.PLACES3D_BUILD) PLACES3D_BUILD.hall({ scene, HX, glow });   // نهاية الممر مجسّمة: js/places3d.js   // الممر بأسلوب صورة الأستاذة: js/hall-look.js
   hall.built = true;
 }
 
@@ -3600,7 +3601,8 @@ document.addEventListener('webkitfullscreenchange', fsLabel);
 async function boot() {
   try { await Promise.race([document.fonts.load(`900 64px Tajawal`), wait2(2500)]); } catch (e) { /* خط النظام */ }
   buildWorld();
-  if (window.LIB_LOOK) LIB_LOOK.init({ scene, LX, G, mat, mesh, box, glow, woodTex, canvasTex, matCache, hemi, texLoader });   // المكتبة الحقيقية: js/library-look.js
+  if (window.LIB_LOOK) LIB_LOOK.init({ scene, LX, G, mat, mesh, box, glow, woodTex, canvasTex, matCache, hemi, texLoader });
+  if (window.PLACES3D_BUILD) { PLACES3D_BUILD.library({ scene, LX, glow, addCol }); PLACES3D_BUILD.yard({ scene, glow }); }   // المكتبة الحقيقية: js/library-look.js
   if (window.YARD_LOOK) YARD_LOOK.init({ scene, yard, hemi, sun, mat, mesh, box, glow, canvasTex, woodTex, texLoader, addCol, yardImg: { w: 1672, h: 941, src: 'assets/rooms/yard.webp' } });   // الساحة بأسلوب صورة الأستاذة: js/yard-look.js
   setArea('yard');
   yard.friends.forEach((f, i) => { const a = i / 6 * PI * 2; f.position.set(Math.cos(a) * 4, 0, 1 + Math.sin(a) * 4); });
@@ -3611,7 +3613,7 @@ async function boot() {
   if (sv && sv.stage && sv.stage !== 'intro') $('btnContinue').hidden = false;
   $('loading').hidden = true;
   requestAnimationFrame(frame);
-  window.__game = { buildRoom, setupRoom, camera, scene, say, toast, tip, G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
+  window.__game = { buildHall, buildRoom, setupRoom, camera, scene, say, toast, tip, G, P, lib, monster, team, interactables, sim, keys, advanceDialog, rooms, hall, enterHall, enterRoom, enterLibrary, get shtshout() { return shtshout; }, get shtshouta() { return shtshouta; }, get roomRun() { return roomRun; }, renderer, glbChars };   // للاختبار من وحدة التحكم
 }
 function wait2(ms) { return new Promise((r) => setTimeout(r, ms)); }
 boot();

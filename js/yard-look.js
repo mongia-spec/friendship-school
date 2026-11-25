@@ -106,7 +106,7 @@
     // 6) صورة الساحة نفسها واجهةً للمدرسة (بطلب الأستاذة منجية): الصورة كاملة بنسبتها،
     //    وخط أرضها عند عتبة الباب فيقف الباب على أرض الساحة؛ وأرضيتها ونافورتها تحت أرض اللعبة.
     const IMG = ctx.yardImg;
-    if (IMG) {
+    if (IMG && !window.PLACES3D) {
       const W = 44, H = W * IMG.h / IMG.w, GROUND = 535 / IMG.h;     // عتبة الباب في الصورة
       const bottom = -(1 - GROUND) * H;
       const face = mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: ctx.texLoader.load(IMG.src), fog: false }), 0, bottom + H / 2, -23.0);

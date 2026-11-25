@@ -77,7 +77,7 @@
     }
     // 3) الصورة نفسها في نهاية الممر (بنسبتها كاملة، بلا قص) وتوهّج بنفسجي
     const IMG = window.ROOM_IMAGES && window.ROOM_IMAGES.hall;
-    if (IMG) {
+    if (IMG && !window.PLACES3D) {
       const H = 14 * IMG.h / IMG.w;
       const back = mesh(new THREE.PlaneGeometry(14, H), new THREE.MeshBasicMaterial({ map: texLoader.load(IMG.src), fog: false }), HX, 1.1 + H / 2, Z1 + 0.03);
       back.renderOrder = -1;

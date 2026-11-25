@@ -13,10 +13,9 @@
     const { scene, LX, G, mat, mesh, box, glow, woodTex, canvasTex, matCache, texLoader } = ctx;
 
     /* ---------- 1. الجدار الخلفي: الصورة كاملة بنسبتها الأصلية ---------- */
-    const tex = texLoader.load(IMG.src);
+    const tex = window.PLACES3D ? null : texLoader.load(IMG.src);
     const BW = 28, BH = BW / ASPECT;                       // 28 × 15.75 متر، بلا قص
-    const backdrop = mesh(new THREE.PlaneGeometry(BW, BH), new THREE.MeshBasicMaterial({ map: tex, fog: false }), LX, BH / 2, -31.97);
-    backdrop.renderOrder = -1;
+    if (!window.PLACES3D) { const backdrop = mesh(new THREE.PlaneGeometry(BW, BH), new THREE.MeshBasicMaterial({ map: tex, fog: false }), LX, BH / 2, -31.97); backdrop.renderOrder = -1; }
 
     // جدران المكتبة: خشب داكن دافئ بدل اللون الفاتح، وجدران عليا تحيط بالصورة
     const wood = new THREE.MeshLambertMaterial({ map: woodTex(6, 2, '#6b3b22') });
