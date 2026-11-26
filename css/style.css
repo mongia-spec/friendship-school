@@ -286,3 +286,35 @@ html[dir="ltr"] .quiz-opts .page-card, html[dir="ltr"] #order.letters .page-card
 /* بطاقة النهاية: كل الشخصيات تظهر كاملة */
 #endCast { flex-wrap: wrap; height: auto; max-height: 34vh; }
 #endCast img { height: clamp(70px, 14vh, 150px); max-width: 10.5%; min-width: 0; }
+
+/* ===== واجهة اللعب الشفافة: لا تغطي المكان ولا اللاعبين (طلب الأستاذة منجية) ===== */
+:root { --halo: 0 0 3px #1b1440, 0 0 3px #1b1440, 0 2px 6px rgba(0,0,0,.8); }
+#quiz.panel-wrap, #order.panel-wrap { background: none; align-items: flex-end; padding: 8px 10px 26px; pointer-events: none; }
+#quiz .panel, #order .panel { pointer-events: auto; background: none; border: 0; box-shadow: none; padding: 0; width: min(760px, 100%); max-height: 48vh; overflow: auto; }
+#quiz .panel h2, #order .panel h2 { font-size: 20px; color: #fff; text-shadow: var(--halo); margin: 0 0 2px; }
+#quizQ { color: #fff; text-shadow: var(--halo); font-size: clamp(18px, 2.6vw, 23px); margin: 2px 0 8px; line-height: 1.5; }
+#quizListen { font-size: 15px; padding: 4px 14px; margin: 2px auto; background: rgba(27,20,64,.45); color: #fff; border: 2px solid rgba(255,255,255,.7); box-shadow: none; }
+.quiz-opts { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+#quiz .page-card, #order .page-card { background: rgba(27,20,64,.45); color: #fff; border: 2px solid rgba(255,255,255,.75); box-shadow: none; padding: 6px 10px; font-size: 18px; line-height: 1.5; text-shadow: 0 1px 3px #000; backdrop-filter: blur(2px); }
+#quiz .page-card:hover, #order .page-card:hover { border-color: #ffd27a; }
+#quiz .page-card.ok, #order .page-card.ok { background: rgba(43,182,115,.7); border-color: #b9ffd8; box-shadow: none; }
+#quiz .page-card.no, #order .page-card.no { background: rgba(232,80,74,.7); border-color: #ffc2bf; box-shadow: none; }
+#quiz .feedback, #order .feedback { color: #fff; text-shadow: var(--halo); font-size: 18px; min-height: 1.2em; margin: 4px 0 0; }
+#order .order-cols h3, #order .hint { color: #fff; text-shadow: var(--halo); }
+#order .slots .empty { border-color: rgba(255,255,255,.7); min-height: 38px; }
+.quiz-mem span { background: rgba(27,20,64,.45); color: #fff; border: 2px solid #ffd27a; font-size: 22px; padding: 6px 12px; }
+/* الحوار المكتوب: شريط شفاف صغير أسفل الشاشة */
+.dlg-body { background: rgba(27,20,64,.5); border: 2px solid rgba(255,255,255,.55); box-shadow: none; min-height: 0; padding: 8px 14px 6px; color: #fff; }
+.dlg-text { color: #fff; text-shadow: 0 1px 3px #000; font-size: clamp(17px, 2.2vw, 21px); line-height: 1.55; margin-top: 4px; }
+.dlg-next { color: #ffd27a; }
+.portrait { width: 78px; height: 112px; }
+#riddle { background: rgba(27,20,64,.5); border: 2px solid rgba(255,255,255,.6); color: #fff; text-shadow: 0 1px 3px #000; box-shadow: none; padding: 6px 16px; font-size: clamp(17px, 2.6vw, 22px); }
+#riddle small { color: #ffd27a; }
+#toast { background: rgba(27,20,64,.6); color: #fff; font-size: 20px; padding: 8px 18px; text-shadow: 0 1px 3px #000; }
+#toast.good { color: #9dffc9; } #toast.bad { color: #ffb3ae; }
+#tip { background: rgba(27,20,64,.45); font-size: 15px; padding: 5px 12px; }
+#fightBar { background: rgba(27,20,64,.5); }
+#owner { background: none; font-size: 10px; opacity: .85; }
+@media (max-width: 600px) { #quiz .panel, #order .panel { max-height: 52vh; } #quiz .page-card { font-size: 16px; padding: 5px 8px; } .quiz-opts { grid-template-columns: 1fr 1fr; } }
+body:has(#quiz:not([hidden])) #touch, body:has(#order:not([hidden])) #touch { display: none; }
+#quizQ, #quiz .panel h2 { text-shadow: 0 0 4px #1b1440, 0 0 4px #1b1440, 0 0 8px #1b1440, 0 2px 6px rgba(0,0,0,.9); }
