@@ -1382,14 +1382,14 @@ function makeRoomMonster(d, pos) {
   return { g, inner, eyes: c.eyes, mouth: c.mouth, arms: c.arms, tail: c.tail, orbit, name, top: c.top, scale: 1, target: 1, hurt: 0, laugh: 0, happy: false, data: d };
 }
 // وحوش Meshy المجسّمة (صور الأستاذة منجية محوّلة إلى 3D): تحلّ محلّ الوحش المرسوم بالأشكال متى وُجد ملفها
-const MONSTER_GLB = { mongia: 'assets/monsters/neglect.glb' };
+const MONSTER_GLB = { mongia: 'assets/monsters/neglect.glb', spelling: 'assets/monsters/spelling.glb', listening: 'assets/monsters/listening.glb', vocab: 'assets/monsters/vocab.glb', expression: 'assets/monsters/expression.glb', homework: 'assets/monsters/homework.glb', memory: 'assets/monsters/memory.glb', review: 'assets/monsters/review.glb', tests: 'assets/monsters/tests.glb', library: 'assets/monsters/library.glb' };
 function attachMonsterGLB(m, id) {
   const url = MONSTER_GLB[id];
   if (!url || !glbLoader) return;
   glbLoader.load(url, (gltf) => {
     const o = gltf.scene;
     const b = new THREE.Box3().setFromObject(o), size = b.getSize(new V3());
-    const k = 1.9 / size.y;
+    const k = (m.boss ? 1.9 : 3.0) / size.y;
     o.scale.setScalar(k);
     o.position.set(-(b.min.x + size.x / 2) * k, -b.min.y * k, -(b.min.z + size.z / 2) * k);
     o.traverse((n) => { if (n.isMesh && n.material.map) { n.material.map.encoding = THREE.LinearEncoding; n.material.map.needsUpdate = true; } });
@@ -2184,6 +2184,7 @@ function buildWorld() {
   drawDoorText(0);
   player = makePlayer();
   monster = makeMonster();
+  attachMonsterGLB(monster, 'library');   // قِرطاس مجسّم Meshy
   monster.g.visible = false;
   shtshout = charSprite('shtshout', 1.25);
   shtshouta = charSprite('shtshouta', 1.25);
